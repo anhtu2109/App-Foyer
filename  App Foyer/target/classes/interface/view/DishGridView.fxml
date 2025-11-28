@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="DishGridController"
+      spacing="12" styleClass="content dish-grid-section">
+    <children>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <children>
+                <Label text="Menu" styleClass="section-title" />
+                <Button text="Reload menu" onAction="#refreshDishes" />
+            </children>
+        </HBox>
+        <Label fx:id="emptyStateLabel" text="No dishes available" visible="false"
+               styleClass="empty-state" />
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                    styleClass="dish-grid-scroll" VBox.vgrow="ALWAYS">
+            <content>
+                <VBox fx:id="categoryContainer" spacing="18" />
+            </content>
+        </ScrollPane>
+    </children>
+    <padding>
+        <Insets top="12" right="12" bottom="12" left="12" />
+    </padding>
+</VBox>
