@@ -7,16 +7,19 @@ import java.util.List;
 public class Order {
     private Long id;
     private String customerName;
-    private String status;
+    private StatusOrder status;
     private LocalDateTime createdAt;
     private List<OrderItem> items = new ArrayList<>();
+    private String message;
+    private boolean payer;
 
     public Order() {
         this.createdAt = LocalDateTime.now();
-        this.status = "NEW";
+        this.status = StatusOrder.ENCOURS;
+        this.payer = false;
     }
 
-    public Order(Long id, String customerName, String status, LocalDateTime createdAt, List<OrderItem> items) {
+    public Order(Long id, String customerName, StatusOrder status, LocalDateTime createdAt, List<OrderItem> items, String message, boolean payer) {
         this.id = id;
         this.customerName = customerName;
         this.status = status;
@@ -24,6 +27,8 @@ public class Order {
         if (items != null) {
             this.items = items;
         }
+        this.message = message;
+        this.payer = payer;
     }
 
     public Long getId() {
@@ -42,11 +47,11 @@ public class Order {
         this.customerName = customerName;
     }
 
-    public String getStatus() {
+    public StatusOrder getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(StatusOrder status) {
         this.status = status;
     }
 
@@ -68,5 +73,21 @@ public class Order {
 
     public double getTotal() {
         return items.stream().mapToDouble(OrderItem::getLineTotal).sum();
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public boolean isPayer() {
+        return payer;
+    }
+
+    public void setPayer(boolean payer) {
+        this.payer = payer;
     }
 }

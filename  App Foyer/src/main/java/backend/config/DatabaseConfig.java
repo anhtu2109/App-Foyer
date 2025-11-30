@@ -25,9 +25,7 @@ public final class DatabaseConfig {
 
     private static void ensureDatabaseFile() {
         Path dbPath = Paths.get(DB_FILE);
-        if (Files.exists(dbPath)) {
-            return;
-        }
+        boolean dbExists = Files.exists(dbPath);
         try (Connection connection = DriverManager.getConnection(JDBC_URL);
              Statement statement = connection.createStatement()) {
             statement.execute("PRAGMA foreign_keys = ON");
@@ -42,7 +40,9 @@ public final class DatabaseConfig {
                     "customer_name TEXT NOT NULL," +
                     "status TEXT NOT NULL," +
                     "created_at TEXT NOT NULL," +
-                    "total REAL NOT NULL" +
+                    "total REAL NOT NULL," +
+                    "message TEXT," +
+                    "payer INTEGER NOT NULL DEFAULT 0" +
                     ")");
             statement.execute("CREATE TABLE IF NOT EXISTS order_items (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -53,8 +53,48 @@ public final class DatabaseConfig {
                     "FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE," +
                     "FOREIGN KEY(dish_id) REFERENCES dishes(id)" +
                     ")");
+            if (dbExists) {
+                ensureOrderMessageColumn(connection);
+                ensureOrderPayerColumn(connection);
+            }
         } catch (SQLException exception) {
             throw new RuntimeException("Unable to initialize database", exception);
+        }
+    }
+
+    private static void ensureOrderMessageColumn(Connection connection) throws SQLException {
+        boolean hasMessageColumn = false;
+        try (Statement statement = connection.createStatement();
+             java.sql.ResultSet resultSet = statement.executeQuery("PRAGMA table_info(orders)")) {
+            while (resultSet.next()) {
+                if ("message".equalsIgnoreCase(resultSet.getString("name"))) {
+                    hasMessageColumn = true;
+                    break;
+                }
+            }
+        }
+        if (!hasMessageColumn) {
+            try (Statement alterStatement = connection.createStatement()) {
+                alterStatement.execute("ALTER TABLE orders ADD COLUMN message TEXT");
+            }
+        }
+    }
+
+    private static void ensureOrderPayerColumn(Connection connection) throws SQLException {
+        boolean hasPayerColumn = false;
+        try (Statement statement = connection.createStatement();
+             java.sql.ResultSet resultSet = statement.executeQuery("PRAGMA table_info(orders)")) {
+            while (resultSet.next()) {
+                if ("payer".equalsIgnoreCase(resultSet.getString("name"))) {
+                    hasPayerColumn = true;
+                    break;
+                }
+            }
+        }
+        if (!hasPayerColumn) {
+            try (Statement alterStatement = connection.createStatement()) {
+                alterStatement.execute("ALTER TABLE orders ADD COLUMN payer INTEGER NOT NULL DEFAULT 0");
+            }
         }
     }
 }

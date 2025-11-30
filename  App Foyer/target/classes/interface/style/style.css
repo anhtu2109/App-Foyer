@@ -94,3 +94,128 @@
 .dish-category-section {
     -fx-spacing: 8;
 }
+
+.new-order-dialog {
+    -fx-background-color: transparent;
+}
+
+.new-order-column {
+    -fx-background-color: white;
+    -fx-border-color: #d0d7de;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 12;
+    -fx-pref-width: 320;
+}
+
+.muted-label {
+    -fx-text-fill: #57606a;
+    -fx-font-size: 12px;
+}
+
+.order-dish-scroll {
+    -fx-background-color: transparent;
+}
+
+.order-dish-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.order-dish-card-wrapper {
+    -fx-background-color: #f6f8fa;
+    -fx-border-color: #d0d7de;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+}
+
+.order-dish-card-wrapper:hover {
+    -fx-border-color: #1f6feb;
+}
+
+.category-entree {
+    -fx-background-color: #fff5f0;
+    -fx-border-color: #ff825c;
+}
+
+.category-plat {
+    -fx-background-color: #f0fff4;
+    -fx-border-color: #2da44e;
+}
+
+.category-dessert {
+    -fx-background-color: #fdf2ff;
+    -fx-border-color: #bf5af2;
+}
+
+.category-boisson {
+    -fx-background-color: #eff6ff;
+    -fx-border-color: #1d4ed8;
+}
+
+.order-dish-card {
+    -fx-alignment: CENTER_LEFT;
+}
+
+.order-dish-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.order-dish-price {
+    -fx-text-fill: #1f6feb;
+    -fx-font-weight: bold;
+}
+
+.subtitle {
+    -fx-font-weight: bold;
+    -fx-text-fill: #24292f;
+}
+
+.order-total {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f6feb;
+}
+
+.order-card {
+    -fx-padding: 12;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d0d7de;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-spacing: 8;
+}
+
+.ghost-button {
+    -fx-background-color: transparent;
+    -fx-border-color: #d0d7de;
+    -fx-border-radius: 6;
+    -fx-padding: 4 12 4 12;
+}
+
+.ghost-button:hover {
+    -fx-border-color: #1f6feb;
+}
+
+.status-badge {
+    -fx-padding: 2 10 2 10;
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-alignment: CENTER;
+}
+
+.status-annuler {
+    -fx-background-color: #d73a49;
+}
+
+.status-encours {
+    -fx-background-color: #1f6feb;
+}
+
+.status-fini {
+    -fx-background-color: #6f42c1;
+}

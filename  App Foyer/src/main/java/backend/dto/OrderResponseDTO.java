@@ -1,5 +1,7 @@
 package backend.dto;
 
+import backend.entity.StatusOrder;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,9 +9,11 @@ import java.util.List;
 public class OrderResponseDTO {
     private Long id;
     private String customerName;
-    private String status;
+    private StatusOrder status;
     private LocalDateTime createdAt;
     private double total;
+    private String message;
+    private boolean payer;
     private final List<OrderItemResponse> items = new ArrayList<>();
 
     public Long getId() {
@@ -28,11 +32,11 @@ public class OrderResponseDTO {
         this.customerName = customerName;
     }
 
-    public String getStatus() {
+    public StatusOrder getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(StatusOrder status) {
         this.status = status;
     }
 
@@ -60,11 +64,36 @@ public class OrderResponseDTO {
         this.items.add(response);
     }
 
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public boolean isPayer() {
+        return payer;
+    }
+
+    public void setPayer(boolean payer) {
+        this.payer = payer;
+    }
+
     public static class OrderItemResponse {
         private long itemId;
+        private long dishId;
         private String dishName;
         private int quantity;
         private double price;
+
+        public long getDishId() {
+            return dishId;
+        }
+
+        public void setDishId(long dishId) {
+            this.dishId = dishId;
+        }
 
         public long getItemId() {
             return itemId;

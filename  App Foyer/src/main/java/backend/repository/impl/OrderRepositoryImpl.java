@@ -5,6 +5,7 @@ import backend.entity.Dish;
 import backend.entity.Order;
 import backend.entity.OrderItem;
 import backend.entity.DishCategory;
+import backend.entity.StatusOrder;
 import backend.repository.OrderRepository;
 
 import java.sql.Connection;
@@ -24,7 +25,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     public List<Order> findAll() {
         List<Order> orders = new ArrayList<>();
-        String sql = "SELECT id, customer_name, status, created_at FROM orders ORDER BY datetime(created_at) DESC";
+        String sql = "SELECT id, customer_name, status, created_at, message, payer FROM orders ORDER BY datetime(created_at) DESC";
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
@@ -41,7 +42,7 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public Optional<Order> findById(long id) {
-        String sql = "SELECT id, customer_name, status, created_at FROM orders WHERE id = ?";
+        String sql = "SELECT id, customer_name, status, created_at, message, payer FROM orders WHERE id = ?";
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
@@ -60,13 +61,15 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public long create(Order order) {
-        String orderSql = "INSERT INTO orders(customer_name, status, created_at, total) VALUES(?, ?, ?, ?)";
+        String orderSql = "INSERT INTO orders(customer_name, status, created_at, total, message, payer) VALUES(?, ?, ?, ?, ?, ?)";
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(orderSql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, order.getCustomerName());
-            statement.setString(2, order.getStatus());
+            statement.setString(2, order.getStatus() != null ? order.getStatus().name() : null);
             statement.setString(3, order.getCreatedAt().format(FORMATTER));
             statement.setDouble(4, order.getTotal());
+            statement.setString(5, order.getMessage());
+            statement.setInt(6, order.isPayer() ? 1 : 0);
             statement.executeUpdate();
             long orderId;
             try (ResultSet keys = statement.getGeneratedKeys()) {
@@ -84,13 +87,15 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public void update(Order order) {
-        String updateSql = "UPDATE orders SET customer_name = ?, status = ?, total = ? WHERE id = ?";
+        String updateSql = "UPDATE orders SET customer_name = ?, status = ?, total = ?, message = ?, payer = ? WHERE id = ?";
         try (Connection connection = DatabaseConfig.getConnection();
              PreparedStatement statement = connection.prepareStatement(updateSql)) {
             statement.setString(1, order.getCustomerName());
-            statement.setString(2, order.getStatus());
+            statement.setString(2, order.getStatus() != null ? order.getStatus().name() : null);
             statement.setDouble(3, order.getTotal());
-            statement.setLong(4, order.getId());
+            statement.setString(4, order.getMessage());
+            statement.setInt(5, order.isPayer() ? 1 : 0);
+            statement.setLong(6, order.getId());
             statement.executeUpdate();
             deleteItems(connection, order.getId());
             saveItems(connection, order.getId(), order.getItems());
@@ -162,9 +167,20 @@ public class OrderRepositoryImpl implements OrderRepository {
         Order order = new Order();
         order.setId(resultSet.getLong("id"));
         order.setCustomerName(resultSet.getString("customer_name"));
-        order.setStatus(resultSet.getString("status"));
+        String statusValue = resultSet.getString("status");
+        if (statusValue != null && !statusValue.isBlank()) {
+            try {
+                order.setStatus(StatusOrder.valueOf(statusValue));
+            } catch (IllegalArgumentException ex) {
+                order.setStatus(StatusOrder.ENCOURS);
+            }
+        } else {
+            order.setStatus(StatusOrder.ENCOURS);
+        }
         String createdAt = resultSet.getString("created_at");
         order.setCreatedAt(LocalDateTime.parse(createdAt, FORMATTER));
+        order.setMessage(resultSet.getString("message"));
+        order.setPayer(resultSet.getInt("payer") == 1);
         return order;
     }
 }

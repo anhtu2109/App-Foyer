@@ -5,6 +5,7 @@ import backend.dto.OrderResponseDTO;
 import backend.entity.Dish;
 import backend.entity.Order;
 import backend.entity.OrderItem;
+import backend.entity.StatusOrder;
 import backend.repository.DishRepository;
 import backend.repository.OrderRepository;
 
@@ -55,7 +56,9 @@ public class OrderService {
     private Order mapToEntity(OrderRequestDTO request) {
         Order order = new Order();
         order.setCustomerName(request.getCustomerName());
-        order.setStatus(request.getStatus() != null ? request.getStatus() : "NEW");
+        order.setStatus(request.getStatus() != null ? request.getStatus() : StatusOrder.ENCOURS);
+        order.setMessage(request.getMessage());
+        order.setPayer(request.isPayer());
         order.setCreatedAt(LocalDateTime.now());
         List<OrderItem> items = request.getItems().stream()
                 .map(itemRequest -> {
@@ -79,11 +82,14 @@ public class OrderService {
         dto.setStatus(order.getStatus());
         dto.setCreatedAt(order.getCreatedAt());
         dto.setTotal(order.getTotal());
+        dto.setMessage(order.getMessage());
+        dto.setPayer(order.isPayer());
         order.getItems().forEach(orderItem -> {
             OrderResponseDTO.OrderItemResponse itemResponse = new OrderResponseDTO.OrderItemResponse();
             if (orderItem.getId() != null) {
                 itemResponse.setItemId(orderItem.getId());
             }
+            itemResponse.setDishId(orderItem.getDish().getId());
             itemResponse.setDishName(orderItem.getDish().getName());
             itemResponse.setQuantity(orderItem.getQuantity());
             itemResponse.setPrice(orderItem.getPrice());

@@ -1,12 +1,16 @@
 package backend.dto;
 
+import backend.entity.StatusOrder;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrderRequestDTO {
     private Long orderId;
     private String customerName;
-    private String status;
+    private StatusOrder status;
+    private String message;
+    private boolean payer;
     private final List<OrderItemRequest> items = new ArrayList<>();
 
     public Long getOrderId() {
@@ -25,12 +29,28 @@ public class OrderRequestDTO {
         this.customerName = customerName;
     }
 
-    public String getStatus() {
+    public StatusOrder getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(StatusOrder status) {
         this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public boolean isPayer() {
+        return payer;
+    }
+
+    public void setPayer(boolean payer) {
+        this.payer = payer;
     }
 
     public List<OrderItemRequest> getItems() {

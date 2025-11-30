@@ -1,5 +1,5 @@
 import backend.controller.DishController;
-import backend.entity.Dish;
+import backend.dto.DishResponseDTO;
 import backend.entity.DishCategory;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -42,8 +42,8 @@ public class DishGridController {
         if (dishController == null) {
             return;
         }
-        List<Dish> dishes = dishController.getMenu();
-        Map<DishCategory, List<Dish>> grouped = groupByCategory(dishes);
+        List<DishResponseDTO> dishes = dishController.getMenu();
+        Map<DishCategory, List<DishResponseDTO>> grouped = groupByCategory(dishes);
         List<Node> sections = new ArrayList<>();
         grouped.forEach((category, dishList) -> {
             if (dishList.isEmpty()) {
@@ -68,18 +68,18 @@ public class DishGridController {
         categoryContainer.setVisible(!empty);
     }
 
-    private Map<DishCategory, List<Dish>> groupByCategory(List<Dish> dishes) {
-        Map<DishCategory, List<Dish>> grouped = new EnumMap<>(DishCategory.class);
+    private Map<DishCategory, List<DishResponseDTO>> groupByCategory(List<DishResponseDTO> dishes) {
+        Map<DishCategory, List<DishResponseDTO>> grouped = new EnumMap<>(DishCategory.class);
         for (DishCategory category : DishCategory.values()) {
             grouped.put(category, new ArrayList<>());
         }
-        for (Dish dish : dishes) {
+        for (DishResponseDTO dish : dishes) {
             grouped.computeIfAbsent(dish.getCategory(), key -> new ArrayList<>()).add(dish);
         }
         return grouped;
     }
 
-    private Node createDishCard(Dish dish) {
+    private Node createDishCard(DishResponseDTO dish) {
         VBox card = new VBox(8);
         card.getStyleClass().add("dish-card");
 
@@ -110,7 +110,7 @@ public class DishGridController {
      * Example: a dish named "Fish Soup" maps to interface/images/fish-soup.png. Drop PNG/JPG assets there
      * to replace the generated placeholder.
      */
-    private Image resolveImageFor(Dish dish) {
+    private Image resolveImageFor(DishResponseDTO dish) {
         String resourceName = slugify(dish.getName());
         String resourcePath = "/interface/images/" + resourceName + ".png";
         InputStream stream = getClass().getResourceAsStream(resourcePath);
@@ -130,7 +130,7 @@ public class DishGridController {
                 .replaceAll("(^-|-$)", "");
     }
 
-    private Image generateSolidImage(Dish dish) {
+    private Image generateSolidImage(DishResponseDTO dish) {
         int width = 360;
         int height = 240;
         WritableImage image = new WritableImage(width, height);
