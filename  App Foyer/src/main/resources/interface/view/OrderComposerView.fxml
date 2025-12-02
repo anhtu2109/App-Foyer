@@ -10,6 +10,40 @@
             <children>
                 <Label text="Available dishes" styleClass="section-title" />
                 <Label text="Tap a dish to add it" styleClass="muted-label" />
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <children>
+                        <ToggleButton text="All" onAction="#handleCategoryFilter" selected="true">
+                            <toggleGroup>
+                                <ToggleGroup fx:id="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>ALL</userData>
+                        </ToggleButton>
+                        <ToggleButton text="Entrées" onAction="#handleCategoryFilter">
+                            <toggleGroup>
+                                <fx:reference source="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>ENTREE</userData>
+                        </ToggleButton>
+                        <ToggleButton text="Plats" onAction="#handleCategoryFilter">
+                            <toggleGroup>
+                                <fx:reference source="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>PLAT</userData>
+                        </ToggleButton>
+                        <ToggleButton text="Desserts" onAction="#handleCategoryFilter">
+                            <toggleGroup>
+                                <fx:reference source="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>DESSERT</userData>
+                        </ToggleButton>
+                        <ToggleButton text="Boissons" onAction="#handleCategoryFilter">
+                            <toggleGroup>
+                                <fx:reference source="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>BOISSON</userData>
+                        </ToggleButton>
+                    </children>
+                </HBox>
                 <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
                             styleClass="order-dish-scroll">
                     <content>

@@ -116,6 +116,41 @@ public class OrderRepositoryImpl implements OrderRepository {
         }
     }
 
+    @Override
+    public void deleteCancelledBefore(LocalDateTime cutoff) {
+        String selectSql = "SELECT id FROM orders WHERE status = ? AND datetime(created_at) < ?";
+        try (Connection connection = DatabaseConfig.getConnection();
+             PreparedStatement selectStatement = connection.prepareStatement(selectSql)) {
+            selectStatement.setString(1, StatusOrder.ANNULER.name());
+            selectStatement.setString(2, cutoff.format(FORMATTER));
+            List<Long> ids = new ArrayList<>();
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    ids.add(resultSet.getLong("id"));
+                }
+            }
+            
+            if (ids.isEmpty()) {
+                return;
+            }
+
+            for (Long orderId : ids) {
+                deleteItems(connection, orderId);
+            }
+
+            String deleteSql = "DELETE FROM orders WHERE id = ?";
+            try (PreparedStatement deleteStatement = connection.prepareStatement(deleteSql)) {
+                for (Long orderId : ids) {
+                    deleteStatement.setLong(1, orderId);
+                    deleteStatement.addBatch();
+                }
+                deleteStatement.executeBatch();
+            }
+        } catch (SQLException exception) {
+            throw new RuntimeException("Failed to purge cancelled orders", exception);
+        }
+    }
+
     private void saveItems(Connection connection, long orderId, List<OrderItem> items) throws SQLException {
         String insertSql = "INSERT INTO order_items(order_id, dish_id, quantity, price) VALUES(?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(insertSql)) {

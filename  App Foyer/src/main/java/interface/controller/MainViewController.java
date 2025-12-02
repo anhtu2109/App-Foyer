@@ -1,5 +1,6 @@
 import backend.controller.DishController;
 import backend.controller.OrderController;
+import backend.controller.TicketController;
 import backend.dto.DishRequestDTO;
 import backend.dto.OrderRequestDTO;
 import backend.dto.OrderResponseDTO;
@@ -7,7 +8,12 @@ import backend.entity.StatusOrder;
 import backend.repository.impl.DishRepositoryImpl;
 import backend.repository.impl.OrderRepositoryImpl;
 import backend.service.DishService;
+import backend.service.JavaxPrinterClient;
 import backend.service.OrderService;
+import backend.service.PlainTextTicketFormatter;
+import backend.service.PrinterClient;
+import backend.service.TicketFormatter;
+import backend.service.TicketPrinterService;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
@@ -28,9 +34,13 @@ public class MainViewController {
     @FXML
     private OrderListController passedOrderListController;
     @FXML
+    private OrderListController cancelledOrderListController;
+    @FXML
     private DishGridController dishGridController;
     @FXML
     private OrderComposerController orderComposerController;
+    @FXML
+    private AnalyticsController analyticsController;
     @FXML
     private TabPane rootTabPane;
     @FXML
@@ -38,6 +48,7 @@ public class MainViewController {
 
     private OrderController orderController;
     private DishController dishController;
+    private TicketController ticketController;
 
     @FXML
     public void initialize() {
@@ -47,6 +58,12 @@ public class MainViewController {
         OrderService orderService = new OrderService(orderRepository, dishRepository);
         dishController = new DishController(dishService); // placeholder for future menu management
         orderController = new OrderController(orderService);
+        purgeOldCancelledOrders();
+        initializeTicketPrinter(orderRepository);
+        if (analyticsController != null) {
+            analyticsController.setOrderController(orderController);
+            analyticsController.refreshAnalytics();
+        }
 
         if (orderListController != null) {
             orderListController.setOrderController(orderController);
@@ -71,7 +88,7 @@ public class MainViewController {
 
                 @Override
                 public void onPrint(OrderResponseDTO order) {
-                    statusLabel.setText("Print for order #" + order.getId() + " not implemented");
+                    handlePrintOrder(order);
                 }
 
                 @Override
@@ -104,7 +121,7 @@ public class MainViewController {
 
                 @Override
                 public void onPrint(OrderResponseDTO order) {
-                    statusLabel.setText("Print for order #" + order.getId() + " not implemented");
+                    handlePrintOrder(order);
                 }
 
                 @Override
@@ -113,6 +130,39 @@ public class MainViewController {
                 }
             });
             passedOrderListController.refreshOrders();
+        }
+        if (cancelledOrderListController != null) {
+            cancelledOrderListController.setOrderController(orderController);
+            cancelledOrderListController.setAllowedStatuses(List.of(StatusOrder.ANNULER));
+            cancelledOrderListController.setTimeFilterEnabled(true);
+            cancelledOrderListController.setTitle("Cancelled Orders");
+            cancelledOrderListController.setOrderActionListener(new OrderListController.OrderActionListener() {
+                @Override
+                public void onCancel(OrderResponseDTO order) {
+                    // already cancelled; no-op but keep consistent
+                }
+
+                @Override
+                public void onModify(OrderResponseDTO order) {
+                    if (orderComposerController != null) {
+                        if (rootTabPane != null && newOrderTab != null) {
+                            rootTabPane.getSelectionModel().select(newOrderTab);
+                        }
+                        orderComposerController.editOrder(order);
+                    }
+                }
+
+                @Override
+                public void onPrint(OrderResponseDTO order) {
+                    handlePrintOrder(order);
+                }
+
+                @Override
+                public void onRecuperer(OrderResponseDTO order) {
+                    handleRecupererOrder(order);
+                }
+            });
+            cancelledOrderListController.refreshOrders();
         }
         if (dishGridController != null) {
             dishGridController.setDishController(dishController);
@@ -149,8 +199,8 @@ public class MainViewController {
         }
         if (orderComposerController != null) {
             orderComposerController.startNewOrder();
-            statusLabel.setText("New order started");
         }
+        statusLabel.setText("New order started");
     }
 
     @FXML
@@ -253,13 +303,66 @@ public class MainViewController {
         return request;
     }
 
+    private void handlePrintOrder(OrderResponseDTO order) {
+        if (order == null) {
+            return;
+        }
+        if (ticketController == null) {
+            showError("Printer unavailable", "No ticket printer configured. Please configure a printer in the application.");
+            return;
+        }
+        try {
+            ticketController.printTicket(order.getId());
+            statusLabel.setText("Ticket printed for order #" + order.getId());
+        } catch (RuntimeException exception) {
+            showError("Unable to print ticket", exception.getMessage());
+        }
+    }
+
     private void refreshOrderLists() {
+        purgeOldCancelledOrders();
         if (orderListController != null) {
             orderListController.refreshOrders();
         }
         if (passedOrderListController != null) {
             passedOrderListController.refreshOrders();
         }
+        if (cancelledOrderListController != null) {
+            cancelledOrderListController.refreshOrders();
+        }
+        refreshAnalyticsView();
     }
 
+    private void refreshAnalyticsView() {
+        if (analyticsController != null) {
+            analyticsController.refreshAnalytics();
+        }
+    }
+
+    private void initializeTicketPrinter(OrderRepositoryImpl orderRepository) {
+        try {
+            TicketFormatter formatter = new PlainTextTicketFormatter("Restaurant Orders");
+            PrinterClient printerClient = new JavaxPrinterClient();
+            TicketPrinterService printerService = new TicketPrinterService(orderRepository, formatter, printerClient);
+            ticketController = new TicketController(printerService);
+        } catch (RuntimeException exception) {
+            ticketController = null;
+            if (statusLabel != null) {
+                statusLabel.setText("Printer unavailable: " + exception.getMessage());
+            }
+        }
+    }
+
+    private void purgeOldCancelledOrders() {
+        if (orderController == null) {
+            return;
+        }
+        try {
+            orderController.purgeCancelledOlderThanDays(7);
+        } catch (RuntimeException exception) {
+            if (statusLabel != null) {
+                statusLabel.setText("Unable to purge cancelled orders: " + exception.getMessage());
+            }
+        }
+    }
 }

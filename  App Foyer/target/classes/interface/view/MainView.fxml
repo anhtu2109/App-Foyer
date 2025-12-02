@@ -14,7 +14,6 @@
                         <TextField fx:id="searchField" promptText="Search orders" onAction="#handleFilter"/>
                         <Button text="Filter" onAction="#handleFilter"/>
                         <Button text="Refresh" onAction="#handleRefresh"/>
-                        <Button text="New Order" onAction="#handleNewOrder"/>
                         <Button text="Add Dish" onAction="#handleAddDish"/>
                         <Label fx:id="statusLabel" text="Initializing..." styleClass="status-label"/>
                     </children>
@@ -46,6 +45,16 @@
                 <Tab text="Passed Orders" closable="false">
                     <content>
                         <fx:include fx:id="passedOrderList" source="OrderListView.fxml"/>
+                    </content>
+                </Tab>
+                <Tab text="Cancelled Orders" closable="false">
+                    <content>
+                        <fx:include fx:id="cancelledOrderList" source="OrderListView.fxml"/>
+                    </content>
+                </Tab>
+                <Tab text="Analytics" closable="false">
+                    <content>
+                        <fx:include fx:id="analytics" source="AnalyticsView.fxml"/>
                     </content>
                 </Tab>
             </tabs>

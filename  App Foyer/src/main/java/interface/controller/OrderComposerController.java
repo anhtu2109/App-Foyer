@@ -9,6 +9,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -17,10 +18,13 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -49,7 +53,10 @@ public class OrderComposerController {
     private Button payerButton;
     @FXML
     private Button resetButton;
+    @FXML
+    private ToggleGroup categoryToggleGroup;
 
+    private final List<DishResponseDTO> availableDishes = new ArrayList<>();
     private final ObservableList<OrderLine> orderLines = FXCollections.observableArrayList();
     private final Map<Long, OrderLine> linesByDish = new HashMap<>();
     private DishController dishController;
@@ -57,6 +64,7 @@ public class OrderComposerController {
     private Consumer<OrderRequestDTO> submitHandler = request -> { };
     private Long editingOrderId;
     private boolean payerFlag;
+    private DishCategory activeCategoryFilter;
 
     @FXML
     public void initialize() {
@@ -198,12 +206,20 @@ public class OrderComposerController {
         if (dishController == null || dishTilePane == null) {
             return;
         }
-        dishTilePane.getChildren().clear();
-        List<DishResponseDTO> dishes = dishController.getMenu();
-        for (DishResponseDTO dish : dishes) {
-            Node card = createDishCard(dish);
-            dishTilePane.getChildren().add(card);
+        availableDishes.clear();
+        availableDishes.addAll(dishController.getMenu());
+        renderDishCards();
+    }
+
+    private void renderDishCards() {
+        if (dishTilePane == null) {
+            return;
         }
+        dishTilePane.getChildren().clear();
+        availableDishes.stream()
+                .filter(dish -> activeCategoryFilter == null || dish.getCategory() == activeCategoryFilter)
+                .map(this::createDishCard)
+                .forEach(node -> dishTilePane.getChildren().add(node));
     }
 
     private Node createDishCard(DishResponseDTO dish) {
@@ -243,6 +259,24 @@ public class OrderComposerController {
     private void submit(StatusOrder status, boolean payer) {
         OrderRequestDTO dto = buildRequest(status, payer);
         submitHandler.accept(dto);
+    }
+
+    @FXML
+    private void handleCategoryFilter(ActionEvent event) {
+        if (categoryToggleGroup == null) {
+            return;
+        }
+        Toggle selected = categoryToggleGroup.getSelectedToggle();
+        if (selected == null || selected.getUserData() == null || "ALL".equals(selected.getUserData())) {
+            activeCategoryFilter = null;
+        } else {
+            try {
+                activeCategoryFilter = DishCategory.valueOf(selected.getUserData().toString());
+            } catch (IllegalArgumentException ex) {
+                activeCategoryFilter = null;
+            }
+        }
+        renderDishCards();
     }
 
     private OrderRequestDTO buildRequest(StatusOrder status, boolean payer) {

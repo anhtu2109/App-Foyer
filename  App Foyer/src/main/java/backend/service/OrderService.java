@@ -53,6 +53,11 @@ public class OrderService {
         orderRepository.delete(id);
     }
 
+    public void purgeCancelledOlderThanDays(int days) {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(days);
+        orderRepository.deleteCancelledBefore(cutoff);
+    }
+
     private Order mapToEntity(OrderRequestDTO request) {
         Order order = new Order();
         order.setCustomerName(request.getCustomerName());
