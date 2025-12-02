@@ -69,7 +69,7 @@ public class MainViewController {
             orderListController.setOrderController(orderController);
             orderListController.setAllowedStatuses(List.of(StatusOrder.ENCOURS));
             orderListController.setTimeFilterEnabled(false);
-            orderListController.setTitle("Active Orders");
+            orderListController.setTitle("Commandes actives");
             orderListController.setOrderActionListener(new OrderListController.OrderActionListener() {
                 @Override
                 public void onCancel(OrderResponseDTO order) {
@@ -102,7 +102,7 @@ public class MainViewController {
             passedOrderListController.setOrderController(orderController);
             passedOrderListController.setAllowedStatuses(List.of(StatusOrder.FINI));
             passedOrderListController.setTimeFilterEnabled(true);
-            passedOrderListController.setTitle("Passed Orders");
+            passedOrderListController.setTitle("Commandes terminées");
             passedOrderListController.setOrderActionListener(new OrderListController.OrderActionListener() {
                 @Override
                 public void onCancel(OrderResponseDTO order) {
@@ -135,7 +135,7 @@ public class MainViewController {
             cancelledOrderListController.setOrderController(orderController);
             cancelledOrderListController.setAllowedStatuses(List.of(StatusOrder.ANNULER));
             cancelledOrderListController.setTimeFilterEnabled(true);
-            cancelledOrderListController.setTitle("Cancelled Orders");
+            cancelledOrderListController.setTitle("Commandes annulées");
             cancelledOrderListController.setOrderActionListener(new OrderListController.OrderActionListener() {
                 @Override
                 public void onCancel(OrderResponseDTO order) {
@@ -173,13 +173,13 @@ public class MainViewController {
             orderComposerController.setOnSubmit(this::handleComposerSubmit);
             orderComposerController.startNewOrder();
         }
-        statusLabel.setText("Ready");
+        statusLabel.setText("Prêt");
     }
 
     @FXML
     private void handleRefresh() {
         refreshOrderLists();
-        statusLabel.setText("Orders refreshed");
+        statusLabel.setText("Commandes actualisées");
     }
 
     @FXML
@@ -200,7 +200,7 @@ public class MainViewController {
         if (orderComposerController != null) {
             orderComposerController.startNewOrder();
         }
-        statusLabel.setText("New order started");
+        statusLabel.setText("Nouvelle commande démarrée");
     }
 
     @FXML
@@ -217,9 +217,9 @@ public class MainViewController {
                 if (orderComposerController != null) {
                     orderComposerController.refreshDishes();
                 }
-                statusLabel.setText("Dish added");
+                statusLabel.setText("Plat ajouté");
             } catch (RuntimeException exception) {
-                showError("Unable to add dish", exception.getMessage());
+                showError("Impossible d'ajouter le plat", exception.getMessage());
             }
         });
     }
@@ -239,17 +239,17 @@ public class MainViewController {
         try {
             if (request.getOrderId() == null) {
                 long id = orderController.createOrder(request);
-                statusLabel.setText("Order #" + id + (request.isPayer() ? " created and paid" : " created"));
+                statusLabel.setText("Commande n°" + id + (request.isPayer() ? " créée et payée" : " créée"));
             } else {
                 orderController.updateOrder(request);
-                statusLabel.setText("Order #" + request.getOrderId() + (request.isPayer() ? " paid" : " updated"));
+                statusLabel.setText("Commande n°" + request.getOrderId() + (request.isPayer() ? " payée" : " mise à jour"));
             }
             refreshOrderLists();
             if (orderComposerController != null) {
                 orderComposerController.startNewOrder();
             }
         } catch (RuntimeException exception) {
-            showError("Unable to save order", exception.getMessage());
+            showError("Impossible d'enregistrer la commande", exception.getMessage());
         }
     }
 
@@ -261,9 +261,9 @@ public class MainViewController {
         try {
             orderController.updateOrder(request);
             refreshOrderLists();
-            statusLabel.setText("Order #" + order.getId() + " cancelled");
+            statusLabel.setText("Commande n°" + order.getId() + " annulée");
         } catch (RuntimeException exception) {
-            showError("Unable to cancel order", exception.getMessage());
+            showError("Impossible d'annuler la commande", exception.getMessage());
         }
     }
 
@@ -276,9 +276,9 @@ public class MainViewController {
         try {
             orderController.updateOrder(request);
             refreshOrderLists();
-            statusLabel.setText("Order #" + order.getId() + " marked as FINI");
+            statusLabel.setText("Commande n°" + order.getId() + " marquée FINI");
         } catch (RuntimeException exception) {
-            showError("Unable to mark as finished", exception.getMessage());
+            showError("Impossible de marquer comme terminée", exception.getMessage());
         }
     }
 
@@ -308,14 +308,14 @@ public class MainViewController {
             return;
         }
         if (ticketController == null) {
-            showError("Printer unavailable", "No ticket printer configured. Please configure a printer in the application.");
+            showError("Imprimante indisponible", "Aucune imprimante de tickets configurée. Veuillez en configurer une dans l'application.");
             return;
         }
         try {
             ticketController.printTicket(order.getId());
-            statusLabel.setText("Ticket printed for order #" + order.getId());
+            statusLabel.setText("Ticket imprimé pour la commande n°" + order.getId());
         } catch (RuntimeException exception) {
-            showError("Unable to print ticket", exception.getMessage());
+            showError("Impossible d'imprimer le ticket", exception.getMessage());
         }
     }
 
@@ -341,14 +341,14 @@ public class MainViewController {
 
     private void initializeTicketPrinter(OrderRepositoryImpl orderRepository) {
         try {
-            TicketFormatter formatter = new PlainTextTicketFormatter("Restaurant Orders");
+            TicketFormatter formatter = new PlainTextTicketFormatter("Commandes du restaurant");
             PrinterClient printerClient = new JavaxPrinterClient();
             TicketPrinterService printerService = new TicketPrinterService(orderRepository, formatter, printerClient);
             ticketController = new TicketController(printerService);
         } catch (RuntimeException exception) {
             ticketController = null;
             if (statusLabel != null) {
-                statusLabel.setText("Printer unavailable: " + exception.getMessage());
+            statusLabel.setText("Imprimante indisponible : " + exception.getMessage());
             }
         }
     }
@@ -361,7 +361,7 @@ public class MainViewController {
             orderController.purgeCancelledOlderThanDays(7);
         } catch (RuntimeException exception) {
             if (statusLabel != null) {
-                statusLabel.setText("Unable to purge cancelled orders: " + exception.getMessage());
+                statusLabel.setText("Impossible de purger les commandes annulées : " + exception.getMessage());
             }
         }
     }

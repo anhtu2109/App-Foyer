@@ -2,8 +2,12 @@ import backend.controller.DishController;
 import backend.dto.DishResponseDTO;
 import backend.entity.DishCategory;
 import javafx.fxml.FXML;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
@@ -18,6 +22,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 public class DishGridController {
     @FXML
@@ -25,12 +30,17 @@ public class DishGridController {
 
     @FXML
     private Label emptyStateLabel;
+    @FXML
+    private Button deleteModeButton;
 
     private DishController dishController;
+    private boolean deleteModeEnabled;
+    private static final String DELETE_PASSWORD = "2109";
 
     @FXML
     public void initialize() {
         categoryContainer.setFillWidth(true);
+        updateDeleteModeButton();
     }
 
     public void setDishController(DishController dishController) {
@@ -66,6 +76,29 @@ public class DishGridController {
         boolean empty = dishes.isEmpty();
         emptyStateLabel.setVisible(empty);
         categoryContainer.setVisible(!empty);
+        updateDeleteModeButton();
+    }
+
+    @FXML
+    private void toggleDeleteMode() {
+        deleteModeEnabled = !deleteModeEnabled;
+        updateDeleteModeButton();
+        refreshDishes();
+    }
+
+    private void updateDeleteModeButton() {
+        if (deleteModeButton == null) {
+            return;
+        }
+        if (deleteModeEnabled) {
+            deleteModeButton.setText("Terminer la suppression");
+            if (!deleteModeButton.getStyleClass().contains("danger-action")) {
+                deleteModeButton.getStyleClass().add("danger-action");
+            }
+        } else {
+            deleteModeButton.setText("Supprimer");
+            deleteModeButton.getStyleClass().remove("danger-action");
+        }
     }
 
     private Map<DishCategory, List<DishResponseDTO>> groupByCategory(List<DishResponseDTO> dishes) {
@@ -82,6 +115,11 @@ public class DishGridController {
     private Node createDishCard(DishResponseDTO dish) {
         VBox card = new VBox(8);
         card.getStyleClass().add("dish-card");
+        if (deleteModeEnabled) {
+            card.getStyleClass().add("dish-card-delete-mode");
+        }
+        card.setCursor(deleteModeEnabled ? Cursor.HAND : Cursor.DEFAULT);
+        card.setOnMouseClicked(event -> handleDishCardClick(dish));
 
         ImageView imageView = new ImageView(resolveImageFor(dish));
         imageView.setFitWidth(180);
@@ -103,6 +141,45 @@ public class DishGridController {
 
         card.getChildren().addAll(imageWrapper, nameLabel, priceLabel, categoryLabel);
         return card;
+    }
+
+    private void handleDishCardClick(DishResponseDTO dish) {
+        if (!deleteModeEnabled || dishController == null || dish == null || dish.getId() == null) {
+            return;
+        }
+        if (!requestDeletePassword(dish.getName())) {
+            return;
+        }
+        try {
+            dishController.deleteDish(dish.getId());
+            refreshDishes();
+        } catch (RuntimeException exception) {
+            showAlert(Alert.AlertType.ERROR, "Impossible de supprimer le plat", exception.getMessage());
+        }
+    }
+
+    private boolean requestDeletePassword(String dishName) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Supprimer un plat");
+        dialog.setHeaderText("Entrez le mot de passe pour supprimer \"" + dishName + "\"");
+        dialog.setContentText("Mot de passe :");
+        Optional<String> password = dialog.showAndWait();
+        if (password.isEmpty()) {
+            return false;
+        }
+        if (!DELETE_PASSWORD.equals(password.get().trim())) {
+            showAlert(Alert.AlertType.ERROR, "Mot de passe incorrect", "Le mot de passe saisi est incorrect.");
+            return false;
+        }
+        return true;
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message != null ? message : "");
+        alert.showAndWait();
     }
 
     /**

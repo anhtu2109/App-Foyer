@@ -63,6 +63,11 @@
     -fx-border-color: #1f6feb;
 }
 
+.dish-card-delete-mode {
+    -fx-border-color: #c62828;
+    -fx-background-color: #fff5f5;
+}
+
 .dish-image-wrapper {
     -fx-background-color: white;
     -fx-border-color: #d0d7de;
@@ -197,6 +202,11 @@
 
 .ghost-button:hover {
     -fx-border-color: #1f6feb;
+}
+
+.danger-action {
+    -fx-background-color: #c62828;
+    -fx-text-fill: white;
 }
 
 .status-badge {

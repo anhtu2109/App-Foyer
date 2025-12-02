@@ -81,7 +81,7 @@ public class OrderListController {
             timeFilterComboBox.setManaged(enabled);
             if (!enabled) {
                 currentTimeFilter = TimeFilter.ALL;
-                timeFilterComboBox.getSelectionModel().select("All");
+                timeFilterComboBox.getSelectionModel().select("Tous");
             }
         }
         applyFilters();
@@ -120,16 +120,16 @@ public class OrderListController {
     }
 
     private void setupTimeFilterCombo() {
-        timeFilterComboBox.getItems().setAll("All", "Today", "Last 1 Month", "Last 3 Months");
+        timeFilterComboBox.getItems().setAll("Tous", "Aujourd'hui", "Dernier mois", "Derniers 3 mois");
         timeFilterComboBox.getSelectionModel().selectFirst();
         timeFilterComboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
             if (newValue == null) {
                 currentTimeFilter = TimeFilter.ALL;
             } else {
                 currentTimeFilter = switch (newValue) {
-                    case "Today" -> TimeFilter.TODAY;
-                    case "Last 1 Month" -> TimeFilter.ONE_MONTH;
-                    case "Last 3 Months" -> TimeFilter.THREE_MONTHS;
+                    case "Aujourd'hui" -> TimeFilter.TODAY;
+                    case "Dernier mois" -> TimeFilter.ONE_MONTH;
+                    case "Derniers 3 mois" -> TimeFilter.THREE_MONTHS;
                     default -> TimeFilter.ALL;
                 };
             }

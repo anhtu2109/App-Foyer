@@ -22,13 +22,13 @@
                 <Insets top="8" right="12" bottom="8" left="12"/>
             </padding>
             <children>
-                <Label text="Analytics" styleClass="title"/>
+                <Label text="Analyse" styleClass="title"/>
                 <BorderPane>
                     <left>
                         <ComboBox fx:id="periodFilterComboBox" prefWidth="160"/>
                     </left>
                     <right>
-                        <Button text="Refresh" onAction="#handleRefresh"/>
+                        <Button text="Actualiser" onAction="#handleRefresh"/>
                     </right>
                 </BorderPane>
             </children>
@@ -42,13 +42,13 @@
                         <Insets top="8" right="12" bottom="12" left="12"/>
                     </padding>
                     <children>
-                        <Label text="Daily Revenue" styleClass="section-title"/>
+                        <Label text="Revenus quotidiens" styleClass="section-title"/>
                         <LineChart fx:id="revenueChart">
                             <xAxis>
                                 <CategoryAxis label="Date"/>
                             </xAxis>
                             <yAxis>
-                                <NumberAxis label="Revenue (€)"/>
+                                <NumberAxis label="Revenus (€)"/>
                             </yAxis>
                         </LineChart>
                     </children>
@@ -61,20 +61,20 @@
                         <Insets top="12" right="12" bottom="12" left="0"/>
                     </padding>
                     <children>
-                        <Label text="Top Dishes" styleClass="section-title"/>
+                        <Label text="Meilleurs plats" styleClass="section-title"/>
                         <PieChart fx:id="dishPieChart" prefHeight="250"/>
-                        <Label text="Key Metrics" styleClass="section-title"/>
+                        <Label text="Indicateurs clés" styleClass="section-title"/>
                         <GridPane hgap="12" vgap="10">
                             <columnConstraints>
                                 <ColumnConstraints halignment="LEFT"/>
                                 <ColumnConstraints halignment="RIGHT"/>
                             </columnConstraints>
                             <children>
-                                <Label text="Total Orders"/>
+                                <Label text="Commandes totales"/>
                                 <Label fx:id="totalOrdersLabel" text="0" GridPane.columnIndex="1"/>
                                 <Label text="Chiffre d'affaires" GridPane.rowIndex="1"/>
                                 <Label fx:id="revenueLabel" text="0 €" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                                <Label text="Average Ticket" GridPane.rowIndex="2"/>
+                                <Label text="Ticket moyen" GridPane.rowIndex="2"/>
                                 <Label fx:id="averageTicketLabel" text="0 €" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
                             </children>
                         </GridPane>

@@ -155,11 +155,11 @@ public class AnalyticsController {
     }
 
     private enum PeriodFilter {
-        ALL("All"),
-        ONE_DAY("1 Day"),
-        ONE_MONTH("1 Month"),
-        THREE_MONTHS("3 Months"),
-        ONE_YEAR("1 Year");
+        ALL("Tous"),
+        ONE_DAY("1 jour"),
+        ONE_MONTH("1 mois"),
+        THREE_MONTHS("3 mois"),
+        ONE_YEAR("1 an");
 
         private final String display;
 
@@ -180,4 +180,3 @@ public class AnalyticsController {
         }
     }
 }
-

@@ -16,31 +16,31 @@ public final class AddDishDialog {
 
     public static Optional<DishRequestDTO> show() {
         Dialog<DishRequestDTO> dialog = new Dialog<>();
-        dialog.setTitle("Add Dish");
-        dialog.setHeaderText("Nhập thông tin món mới");
+        dialog.setTitle("Ajouter un plat");
+        dialog.setHeaderText("Saisissez les informations du nouveau plat");
 
-        ButtonType addButtonType = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
+        ButtonType addButtonType = new ButtonType("Ajouter", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
 
         TextField nameField = new TextField();
-        nameField.setPromptText("Dish name");
+        nameField.setPromptText("Nom du plat");
 
         TextField priceField = new TextField();
-        priceField.setPromptText("Price");
+        priceField.setPromptText("Prix");
 
         ComboBox<DishCategory> categoryComboBox = new ComboBox<>(FXCollections.observableArrayList(DishCategory.values()));
-        categoryComboBox.setPromptText("Category");
+        categoryComboBox.setPromptText("Catégorie");
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        grid.add(new Label("Name"), 0, 0);
+        grid.add(new Label("Nom"), 0, 0);
         grid.add(nameField, 1, 0);
-        grid.add(new Label("Price"), 0, 1);
+        grid.add(new Label("Prix"), 0, 1);
         grid.add(priceField, 1, 1);
-        grid.add(new Label("Category"), 0, 2);
+        grid.add(new Label("Catégorie"), 0, 2);
         grid.add(categoryComboBox, 1, 2);
 
         dialog.getDialogPane().setContent(grid);

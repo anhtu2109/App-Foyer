@@ -6,14 +6,14 @@
 <VBox xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="OrderListController" spacing="10" styleClass="content">
     <children>
-        <Label fx:id="titleLabel" text="Orders" styleClass="section-title"/>
+        <Label fx:id="titleLabel" text="Commandes" styleClass="section-title"/>
         <ListView fx:id="orderListView" prefHeight="400.0" VBox.vgrow="ALWAYS" />
-        <Label fx:id="emptyStateLabel" text="No orders available" visible="false"
+        <Label fx:id="emptyStateLabel" text="Aucune commande disponible" visible="false"
                styleClass="empty-state"/>
         <HBox spacing="10">
             <children>
-                <Button text="Refresh" onAction="#refreshOrders"/>
-                <ComboBox fx:id="timeFilterComboBox" promptText="Time filter" visible="false" managed="false"/>
+                <Button text="Actualiser" onAction="#refreshOrders"/>
+                <ComboBox fx:id="timeFilterComboBox" promptText="Filtre temporel" visible="false" managed="false"/>
             </children>
         </HBox>
     </children>

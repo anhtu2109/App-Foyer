@@ -178,7 +178,9 @@ public class OrderComposerController {
 
     private void updateModeLabel(boolean editing) {
         if (modeLabel != null) {
-            String label = editing ? "Editing order #" + (editingOrderId != null ? editingOrderId : "?") : "Creating new order";
+            String label = editing
+                    ? "Modification commande n°" + (editingOrderId != null ? editingOrderId : "?")
+                    : "Création d'une nouvelle commande";
             modeLabel.setText(label);
         }
     }
@@ -281,7 +283,7 @@ public class OrderComposerController {
 
     private OrderRequestDTO buildRequest(StatusOrder status, boolean payer) {
         if (isFormInvalid()) {
-            throw new IllegalStateException("Order form is incomplete");
+            throw new IllegalStateException("Le formulaire de commande est incomplet");
         }
         OrderRequestDTO dto = new OrderRequestDTO();
         dto.setOrderId(editingOrderId);

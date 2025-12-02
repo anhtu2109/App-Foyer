@@ -21,10 +21,10 @@ public class PlainTextTicketFormatter implements TicketFormatter {
     public byte[] format(Order order) {
         StringBuilder builder = new StringBuilder();
         builder.append("=== ").append(restaurantName).append(" ===\n");
-        builder.append("Order #").append(order.getId() == null ? "-" : order.getId()).append("\n");
-        builder.append("Customer: ").append(order.getCustomerName() == null ? "N/A" : order.getCustomerName()).append("\n");
-        builder.append("Status: ").append(order.getStatus()).append("\n");
-        builder.append("Created: ").append(order.getCreatedAt() == null ? "-" : DATE_FORMAT.format(order.getCreatedAt())).append("\n");
+        builder.append("Commande n°").append(order.getId() == null ? "-" : order.getId()).append("\n");
+        builder.append("Client : ").append(order.getCustomerName() == null ? "N/D" : order.getCustomerName()).append("\n");
+        builder.append("Statut : ").append(order.getStatus()).append("\n");
+        builder.append("Créée : ").append(order.getCreatedAt() == null ? "-" : DATE_FORMAT.format(order.getCreatedAt())).append("\n");
         builder.append("--------------------------------\n");
         for (OrderItem item : order.getItems()) {
             builder.append(item.getQuantity())
@@ -35,12 +35,11 @@ public class PlainTextTicketFormatter implements TicketFormatter {
                     .append("\n");
         }
         builder.append("--------------------------------\n");
-        builder.append("Total: ").append(String.format("%.2f", order.getTotal())).append("\n");
+        builder.append("Total : ").append(String.format("%.2f", order.getTotal())).append("\n");
         if (order.getMessage() != null && !order.getMessage().isBlank()) {
-            builder.append("Note: ").append(order.getMessage()).append("\n");
+            builder.append("Note : ").append(order.getMessage()).append("\n");
         }
-        builder.append(order.isPayer() ? "PAID" : "UNPAID").append("\n\n");
+        builder.append(order.isPayer() ? "PAYÉ" : "NON PAYÉ").append("\n\n");
         return builder.toString().getBytes(StandardCharsets.UTF_8);
     }
 }
-

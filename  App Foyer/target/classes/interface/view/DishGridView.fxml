@@ -11,6 +11,7 @@
             <children>
                 <Label text="Menu" styleClass="section-title" />
                 <Button text="Reload menu" onAction="#refreshDishes" />
+                <Button fx:id="deleteModeButton" text="Delete" onAction="#toggleDeleteMode" />
             </children>
         </HBox>
         <Label fx:id="emptyStateLabel" text="No dishes available" visible="false"
