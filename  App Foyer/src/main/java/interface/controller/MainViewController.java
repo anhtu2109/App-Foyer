@@ -173,6 +173,13 @@ public class MainViewController {
             orderComposerController.setOnSubmit(this::handleComposerSubmit);
             orderComposerController.startNewOrder();
         }
+        if (rootTabPane != null && newOrderTab != null) {
+            newOrderTab.setOnSelectionChanged(event -> {
+                if (newOrderTab.isSelected() && orderComposerController != null) {
+                    orderComposerController.startNewOrder();
+                }
+            });
+        }
         statusLabel.setText("Prêt");
     }
 

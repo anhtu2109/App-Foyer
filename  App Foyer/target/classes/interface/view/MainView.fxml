@@ -8,14 +8,14 @@
     <top>
         <VBox spacing="8" styleClass="toolbar" BorderPane.alignment="CENTER">
             <children>
-                <Label text="Kitchen Dashboard" styleClass="title"/>
+                <Label text="Tableau de bord cuisine" styleClass="title"/>
                 <HBox spacing="12">
                     <children>
-                        <TextField fx:id="searchField" promptText="Search orders" onAction="#handleFilter"/>
-                        <Button text="Filter" onAction="#handleFilter"/>
-                        <Button text="Refresh" onAction="#handleRefresh"/>
-                        <Button text="Add Dish" onAction="#handleAddDish"/>
-                        <Label fx:id="statusLabel" text="Initializing..." styleClass="status-label"/>
+                        <TextField fx:id="searchField" promptText="Rechercher des commandes" onAction="#handleFilter"/>
+                        <Button text="Filtrer" onAction="#handleFilter"/>
+                        <Button text="Actualiser" onAction="#handleRefresh"/>
+                        <Button text="Ajouter un plat" onAction="#handleAddDish"/>
+                        <Label fx:id="statusLabel" text="Initialisation..." styleClass="status-label"/>
                     </children>
                 </HBox>
             </children>
@@ -27,12 +27,12 @@
     <center>
         <TabPane fx:id="rootTabPane" BorderPane.alignment="CENTER">
             <tabs>
-                <Tab text="Orders" closable="false">
+                <Tab text="Commandes" closable="false">
                     <content>
                         <fx:include fx:id="orderList" source="OrderListView.fxml"/>
                     </content>
                 </Tab>
-                <Tab fx:id="newOrderTab" text="New Order" closable="false">
+                <Tab fx:id="newOrderTab" text="Nouvelle commande" closable="false">
                     <content>
                         <fx:include fx:id="orderComposer" source="OrderComposerView.fxml"/>
                     </content>
@@ -42,17 +42,17 @@
                         <fx:include fx:id="dishGrid" source="DishGridView.fxml"/>
                     </content>
                 </Tab>
-                <Tab text="Passed Orders" closable="false">
+                <Tab text="Commandes terminées" closable="false">
                     <content>
                         <fx:include fx:id="passedOrderList" source="OrderListView.fxml"/>
                     </content>
                 </Tab>
-                <Tab text="Cancelled Orders" closable="false">
+                <Tab text="Commandes annulées" closable="false">
                     <content>
                         <fx:include fx:id="cancelledOrderList" source="OrderListView.fxml"/>
                     </content>
                 </Tab>
-                <Tab text="Analytics" closable="false">
+                <Tab text="Analyse" closable="false">
                     <content>
                         <fx:include fx:id="analytics" source="AnalyticsView.fxml"/>
                     </content>

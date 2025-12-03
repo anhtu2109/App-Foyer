@@ -29,11 +29,11 @@ MainViewController.class
 MainViewController$3.class
 OrderListController.class
 backend/entity/DishCategory.class
-OrderComposerController$1.class
 AddDishDialog.class
 DishGridController.class
 backend/entity/OrderItem.class
 backend/service/JavaxPrinterClient.class
+OrderComposerController$OrderLineCell.class
 backend/entity/Order.class
 backend/service/TicketFormatter.class
 AnalyticsController$PeriodFilter.class

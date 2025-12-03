@@ -12,6 +12,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -23,6 +24,9 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,18 +76,7 @@ public class OrderComposerController {
         dishTilePane.setVgap(8);
         dishTilePane.setPrefColumns(3);
         orderItemsListView.setItems(orderLines);
-        orderItemsListView.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(OrderLine item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(String.format(Locale.getDefault(), "%s  x%d  —  %.2f €",
-                            item.getDish().getName(), item.getQuantity(), item.getLineTotal()));
-                }
-            }
-        });
+        orderItemsListView.setCellFactory(list -> new OrderLineCell());
         orderLines.addListener((ListChangeListener<OrderLine>) change -> updateSummary());
         if (customerNameField != null) {
             customerNameField.textProperty().addListener((obs, oldValue, newValue) -> updateFormValidity());
@@ -333,6 +326,62 @@ public class OrderComposerController {
         return formInvalid;
     }
 
+    private class OrderLineCell extends ListCell<OrderLine> {
+        private final Label infoLabel = new Label();
+        private final Label quantityLabel = new Label();
+        private final Button minusButton = new Button("-");
+        private final Button plusButton = new Button("+");
+        private final Region spacer = new Region();
+        private final HBox quantityBox = new HBox(6, minusButton, quantityLabel, plusButton);
+        private final HBox container = new HBox(10, infoLabel, spacer, quantityBox);
+
+        OrderLineCell() {
+            minusButton.setOnAction(event -> adjustQuantity(-1));
+            plusButton.setOnAction(event -> adjustQuantity(1));
+            minusButton.getStyleClass().add("ghost-button");
+            plusButton.getStyleClass().add("ghost-button");
+            quantityBox.setAlignment(Pos.CENTER_RIGHT);
+            container.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+        }
+
+        private void adjustQuantity(int delta) {
+            OrderLine line = getItem();
+            if (line == null) {
+                return;
+            }
+            if (delta > 0) {
+                line.increment();
+            } else {
+                line.decrement();
+                if (line.getQuantity() <= 0) {
+                    orderLines.remove(line);
+                    if (line.getDish().getId() != null) {
+                        linesByDish.remove(line.getDish().getId());
+                    }
+                    orderItemsListView.refresh();
+                    updateSummary();
+                    return;
+                }
+            }
+            orderItemsListView.refresh();
+            updateSummary();
+        }
+
+        @Override
+        protected void updateItem(OrderLine item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setGraphic(null);
+                return;
+            }
+            infoLabel.setText(String.format(Locale.getDefault(), "%s  x%d  —  %.2f €",
+                    item.getDish().getName(), item.getQuantity(), item.getLineTotal()));
+            quantityLabel.setText(String.valueOf(item.getQuantity()));
+            setGraphic(container);
+        }
+    }
+
     private static class OrderLine {
         private final DishResponseDTO dish;
         private int quantity;
@@ -343,6 +392,12 @@ public class OrderComposerController {
 
         void increment() {
             quantity++;
+        }
+
+        void decrement() {
+            if (quantity > 0) {
+                quantity--;
+            }
         }
 
         void setQuantity(int quantity) {
