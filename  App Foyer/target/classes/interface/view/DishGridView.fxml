@@ -11,6 +11,7 @@
             <children>
                 <Label text="Menu" styleClass="section-title" />
                 <Button text="Recharger le menu" onAction="#refreshDishes" />
+                <Button fx:id="editModeButton" text="Modifier" onAction="#toggleEditMode" />
                 <Button fx:id="deleteModeButton" text="Supprimer" onAction="#toggleDeleteMode" />
             </children>
         </HBox>

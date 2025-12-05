@@ -8,7 +8,7 @@
     <top>
         <VBox spacing="8" styleClass="toolbar" BorderPane.alignment="CENTER">
             <children>
-                <Label text="Tableau de bord cuisine" styleClass="title"/>
+                <Label text="Foyer Vietnam" styleClass="title"/>
                 <HBox spacing="12">
                     <children>
                         <TextField fx:id="searchField" promptText="Rechercher des commandes" onAction="#handleFilter"/>

@@ -18,6 +18,7 @@
 /Users/minervadinh/Desktop/project tu/ App Foyer/src/main/java/backend/dto/OrderRequestDTO.java
 /Users/minervadinh/Desktop/project tu/ App Foyer/src/main/java/backend/repository/OrderRepository.java
 /Users/minervadinh/Desktop/project tu/ App Foyer/src/main/java/backend/dto/DishResponseDTO.java
+/Users/minervadinh/Desktop/project tu/ App Foyer/src/main/java/interface/component/EditDishDialog.java
 /Users/minervadinh/Desktop/project tu/ App Foyer/src/main/java/backend/service/OrderService.java
 /Users/minervadinh/Desktop/project tu/ App Foyer/src/main/java/backend/dto/DishRequestDTO.java
 /Users/minervadinh/Desktop/project tu/ App Foyer/src/main/java/backend/repository/impl/OrderRepositoryImpl.java

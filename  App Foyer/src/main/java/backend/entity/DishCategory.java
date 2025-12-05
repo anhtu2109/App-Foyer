@@ -4,5 +4,6 @@ public enum DishCategory {
     ENTREE,
     PLAT,
     DESSERT,
-    BOISSON
+    BOISSON,
+    MENU
 }

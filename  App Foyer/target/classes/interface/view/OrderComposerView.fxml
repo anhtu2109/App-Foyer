@@ -30,6 +30,12 @@
                             </toggleGroup>
                             <userData>PLAT</userData>
                         </ToggleButton>
+                        <ToggleButton text="Menu" onAction="#handleCategoryFilter">
+                            <toggleGroup>
+                                <fx:reference source="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>MENU</userData>
+                        </ToggleButton>
                         <ToggleButton text="Desserts" onAction="#handleCategoryFilter">
                             <toggleGroup>
                                 <fx:reference source="categoryToggleGroup"/>
@@ -59,8 +65,17 @@
             <children>
                 <Label fx:id="modeLabel" text="Commande en cours" styleClass="section-title" />
                 <TextField fx:id="customerNameField" promptText="Nom du client" />
-                <TextArea fx:id="messageField" promptText="Message pour la cuisine (optionnel)" prefRowCount="3"
+                <TextArea fx:id="messageField" promptText="Message pour la cuisine (requis pour Menu)" prefRowCount="3"
                           wrapText="true" />
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <children>
+                        <Label text="Raccourcis message :" styleClass="muted-label" />
+                        <Button text="Chè đậu" onAction="#handlePresetMessage" userData="Chè đậu" />
+                        <Button text="Chè chuối" onAction="#handlePresetMessage" userData="Chè chuối" />
+                    </children>
+                </HBox>
+                <Label fx:id="messageRequirementLabel" text="Message requis pour les plats Menu" visible="false"
+                       managed="false" styleClass="muted-label" />
                 <Label text="Articles" styleClass="subtitle" />
                 <ListView fx:id="orderItemsListView" prefHeight="220" />
                 <Label fx:id="emptyOrderLabel" text="Sélectionnez un plat pour commencer" styleClass="empty-state" />

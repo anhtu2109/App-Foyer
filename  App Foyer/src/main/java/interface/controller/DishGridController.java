@@ -32,15 +32,19 @@ public class DishGridController {
     private Label emptyStateLabel;
     @FXML
     private Button deleteModeButton;
+    @FXML
+    private Button editModeButton;
 
     private DishController dishController;
     private boolean deleteModeEnabled;
+    private boolean editModeEnabled;
     private static final String DELETE_PASSWORD = "2109";
 
     @FXML
     public void initialize() {
         categoryContainer.setFillWidth(true);
         updateDeleteModeButton();
+        updateEditModeButton();
     }
 
     public void setDishController(DishController dishController) {
@@ -77,12 +81,28 @@ public class DishGridController {
         emptyStateLabel.setVisible(empty);
         categoryContainer.setVisible(!empty);
         updateDeleteModeButton();
+        updateEditModeButton();
     }
 
     @FXML
     private void toggleDeleteMode() {
         deleteModeEnabled = !deleteModeEnabled;
+        if (deleteModeEnabled) {
+            editModeEnabled = false;
+            updateEditModeButton();
+        }
         updateDeleteModeButton();
+        refreshDishes();
+    }
+
+    @FXML
+    private void toggleEditMode() {
+        editModeEnabled = !editModeEnabled;
+        if (editModeEnabled) {
+            deleteModeEnabled = false;
+            updateDeleteModeButton();
+        }
+        updateEditModeButton();
         refreshDishes();
     }
 
@@ -98,6 +118,21 @@ public class DishGridController {
         } else {
             deleteModeButton.setText("Supprimer");
             deleteModeButton.getStyleClass().remove("danger-action");
+        }
+    }
+
+    private void updateEditModeButton() {
+        if (editModeButton == null) {
+            return;
+        }
+        if (editModeEnabled) {
+            editModeButton.setText("Terminer la modification");
+            if (!editModeButton.getStyleClass().contains("primary-action")) {
+                editModeButton.getStyleClass().add("primary-action");
+            }
+        } else {
+            editModeButton.setText("Modifier");
+            editModeButton.getStyleClass().remove("primary-action");
         }
     }
 
@@ -118,7 +153,10 @@ public class DishGridController {
         if (deleteModeEnabled) {
             card.getStyleClass().add("dish-card-delete-mode");
         }
-        card.setCursor(deleteModeEnabled ? Cursor.HAND : Cursor.DEFAULT);
+        if (editModeEnabled) {
+            card.getStyleClass().add("dish-card-edit-mode");
+        }
+        card.setCursor((deleteModeEnabled || editModeEnabled) ? Cursor.HAND : Cursor.DEFAULT);
         card.setOnMouseClicked(event -> handleDishCardClick(dish));
 
         ImageView imageView = new ImageView(resolveImageFor(dish));
@@ -144,10 +182,18 @@ public class DishGridController {
     }
 
     private void handleDishCardClick(DishResponseDTO dish) {
-        if (!deleteModeEnabled || dishController == null || dish == null || dish.getId() == null) {
+        if (dishController == null || dish == null || dish.getId() == null) {
             return;
         }
-        if (!requestDeletePassword(dish.getName())) {
+        if (deleteModeEnabled) {
+            handleDeleteDish(dish);
+        } else if (editModeEnabled) {
+            handleEditDish(dish);
+        }
+    }
+
+    private void handleDeleteDish(DishResponseDTO dish) {
+        if (!requestPassword("Supprimer un plat", "Entrez le mot de passe pour supprimer \"" + dish.getName() + "\"")) {
             return;
         }
         try {
@@ -158,10 +204,24 @@ public class DishGridController {
         }
     }
 
-    private boolean requestDeletePassword(String dishName) {
+    private void handleEditDish(DishResponseDTO dish) {
+        if (!requestPassword("Modifier un plat", "Entrez le mot de passe pour modifier \"" + dish.getName() + "\"")) {
+            return;
+        }
+        EditDishDialog.show(dish).ifPresent(updatedDish -> {
+            try {
+                dishController.updateDish(updatedDish);
+                refreshDishes();
+            } catch (RuntimeException exception) {
+                showAlert(Alert.AlertType.ERROR, "Impossible de modifier le plat", exception.getMessage());
+            }
+        });
+    }
+
+    private boolean requestPassword(String title, String header) {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Supprimer un plat");
-        dialog.setHeaderText("Entrez le mot de passe pour supprimer \"" + dishName + "\"");
+        dialog.setTitle(title);
+        dialog.setHeaderText(header);
         dialog.setContentText("Mot de passe :");
         Optional<String> password = dialog.showAndWait();
         if (password.isEmpty()) {

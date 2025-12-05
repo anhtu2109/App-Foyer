@@ -17,12 +17,16 @@ import backend.service.TicketPrinterService;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Root controller wires repository/service layer into the UI.
  */
 public class MainViewController {
+    private static final DateTimeFormatter ORDER_DETAILS_FORMATTER =
+            DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm", Locale.getDefault());
     @FXML
     private TextField searchField;
 
@@ -239,21 +243,27 @@ public class MainViewController {
         alert.showAndWait();
     }
 
-    private void handleComposerSubmit(OrderRequestDTO request) {
+    private void handleComposerSubmit(OrderRequestDTO request, boolean printTicket) {
         if (orderController == null) {
             return;
         }
+        Long processedOrderId = null;
         try {
             if (request.getOrderId() == null) {
                 long id = orderController.createOrder(request);
+                processedOrderId = id;
                 statusLabel.setText("Commande n°" + id + (request.isPayer() ? " créée et payée" : " créée"));
             } else {
                 orderController.updateOrder(request);
+                processedOrderId = request.getOrderId();
                 statusLabel.setText("Commande n°" + request.getOrderId() + (request.isPayer() ? " payée" : " mise à jour"));
             }
             refreshOrderLists();
             if (orderComposerController != null) {
                 orderComposerController.startNewOrder();
+            }
+            if (printTicket && processedOrderId != null) {
+                printTicketAutomatically(processedOrderId);
             }
         } catch (RuntimeException exception) {
             showError("Impossible d'enregistrer la commande", exception.getMessage());
@@ -314,6 +324,12 @@ public class MainViewController {
         if (order == null) {
             return;
         }
+        if (!showPrintConfirmation(order)) {
+            if (statusLabel != null) {
+                statusLabel.setText("Impression annulée pour la commande n°" + order.getId());
+            }
+            return;
+        }
         if (ticketController == null) {
             showError("Imprimante indisponible", "Aucune imprimante de tickets configurée. Veuillez en configurer une dans l'application.");
             return;
@@ -321,6 +337,19 @@ public class MainViewController {
         try {
             ticketController.printTicket(order.getId());
             statusLabel.setText("Ticket imprimé pour la commande n°" + order.getId());
+        } catch (RuntimeException exception) {
+            showError("Impossible d'imprimer le ticket", exception.getMessage());
+        }
+    }
+
+    private void printTicketAutomatically(long orderId) {
+        if (ticketController == null) {
+            showError("Imprimante indisponible", "Aucune imprimante de tickets configurée. Veuillez en configurer une dans l'application.");
+            return;
+        }
+        try {
+            ticketController.printTicket(orderId);
+            statusLabel.setText("Ticket imprimé pour la commande n°" + orderId);
         } catch (RuntimeException exception) {
             showError("Impossible d'imprimer le ticket", exception.getMessage());
         }
@@ -358,6 +387,44 @@ public class MainViewController {
             statusLabel.setText("Imprimante indisponible : " + exception.getMessage());
             }
         }
+    }
+
+    private boolean showPrintConfirmation(OrderResponseDTO order) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Imprimer la commande");
+        alert.setHeaderText("Résumé de la commande n°" + order.getId());
+        ButtonType printButton = new ButtonType("Imprimer", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(printButton, cancelButton);
+
+        TextArea summaryArea = new TextArea(buildOrderSummary(order));
+        summaryArea.setEditable(false);
+        summaryArea.setWrapText(true);
+        summaryArea.setPrefRowCount(Math.min(14, order.getItems().size() + 8));
+        alert.getDialogPane().setContent(summaryArea);
+
+        return alert.showAndWait().filter(response -> response == printButton).isPresent();
+    }
+
+    private String buildOrderSummary(OrderResponseDTO order) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Client : ").append(order.getCustomerName()).append('\n');
+        if (order.getCreatedAt() != null) {
+            builder.append("Créée le : ").append(ORDER_DETAILS_FORMATTER.format(order.getCreatedAt())).append('\n');
+        }
+        builder.append("Statut : ").append(order.getStatus() != null ? order.getStatus().name() : "Inconnu").append('\n');
+        builder.append("Payée : ").append(order.isPayer() ? "Oui" : "Non").append('\n');
+        if (order.getMessage() != null && !order.getMessage().isBlank()) {
+            builder.append("Note : ").append(order.getMessage().trim()).append('\n');
+        }
+        builder.append("\nArticles :\n");
+        order.getItems().forEach(item -> builder.append(String.format(Locale.getDefault(),
+                "- %dx %s — %.2f €\n",
+                item.getQuantity(),
+                item.getDishName(),
+                item.getPrice() * item.getQuantity())));
+        builder.append("\nTotal : ").append(String.format(Locale.getDefault(), "%.2f €", order.getTotal()));
+        return builder.toString();
     }
 
     private void purgeOldCancelledOrders() {

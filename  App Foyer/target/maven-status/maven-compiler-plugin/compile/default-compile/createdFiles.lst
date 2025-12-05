@@ -39,5 +39,7 @@ backend/service/TicketFormatter.class
 AnalyticsController$PeriodFilter.class
 backend/config/DatabaseConfig.class
 backend/dto/DishResponseDTO.class
+OrderComposerController$SubmitHandler.class
 backend/controller/OrderController.class
 backend/service/OrderService.class
+EditDishDialog.class

@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public class OrderComposerController {
     @FXML
@@ -49,6 +48,8 @@ public class OrderComposerController {
     private TextField customerNameField;
     @FXML
     private TextArea messageField;
+    @FXML
+    private Label messageRequirementLabel;
     @FXML
     private Label modeLabel;
     @FXML
@@ -65,7 +66,7 @@ public class OrderComposerController {
     private final Map<Long, OrderLine> linesByDish = new HashMap<>();
     private DishController dishController;
     private final BooleanProperty formInvalid = new SimpleBooleanProperty(true);
-    private Consumer<OrderRequestDTO> submitHandler = request -> { };
+    private SubmitHandler submitHandler = (request, printTicket) -> { };
     private Long editingOrderId;
     private boolean payerFlag;
     private DishCategory activeCategoryFilter;
@@ -80,6 +81,9 @@ public class OrderComposerController {
         orderLines.addListener((ListChangeListener<OrderLine>) change -> updateSummary());
         if (customerNameField != null) {
             customerNameField.textProperty().addListener((obs, oldValue, newValue) -> updateFormValidity());
+        }
+        if (messageField != null) {
+            messageField.textProperty().addListener((obs, oldValue, newValue) -> updateFormValidity());
         }
         if (commanderButton != null) {
             commanderButton.disableProperty().bind(formInvalid);
@@ -99,8 +103,8 @@ public class OrderComposerController {
         populateDishGrid();
     }
 
-    public void setOnSubmit(Consumer<OrderRequestDTO> handler) {
-        this.submitHandler = handler != null ? handler : request -> { };
+    public void setOnSubmit(SubmitHandler handler) {
+        this.submitHandler = handler != null ? handler : (request, printTicket) -> { };
     }
 
     @FXML
@@ -109,14 +113,32 @@ public class OrderComposerController {
     }
 
     @FXML
+    private void handlePresetMessage(ActionEvent event) {
+        if (messageField == null || event == null) {
+            return;
+        }
+        Object source = event.getSource();
+        if (!(source instanceof Button button)) {
+            return;
+        }
+        Object data = button.getUserData();
+        if (data == null) {
+            return;
+        }
+        messageField.setText(data.toString());
+        messageField.positionCaret(messageField.getText().length());
+        updateFormValidity();
+    }
+
+    @FXML
     private void handleCommanderAction() {
-        submit(StatusOrder.ENCOURS, payerFlag);
+        submit(StatusOrder.ENCOURS, payerFlag, true);
     }
 
     @FXML
     private void handlePayerAction() {
         payerFlag = true;
-        submit(StatusOrder.ENCOURS, true);
+        submit(StatusOrder.ENCOURS, true, true);
     }
 
     public void startNewOrder() {
@@ -251,9 +273,9 @@ public class OrderComposerController {
         updateSummary();
     }
 
-    private void submit(StatusOrder status, boolean payer) {
+    private void submit(StatusOrder status, boolean payer, boolean printTicket) {
         OrderRequestDTO dto = buildRequest(status, payer);
-        submitHandler.accept(dto);
+        submitHandler.handle(dto, printTicket);
     }
 
     @FXML
@@ -282,7 +304,10 @@ public class OrderComposerController {
         dto.setOrderId(editingOrderId);
         dto.setCustomerName(customerNameField.getText().trim());
         dto.setStatus(status);
-        String note = messageField.getText();
+        String note = messageField != null ? messageField.getText() : null;
+        if (isMenuMessageRequired() && (note == null || note.trim().isEmpty())) {
+            throw new IllegalStateException("Un message est requis pour les plats Menu");
+        }
         if (note != null && !note.trim().isEmpty()) {
             dto.setMessage(note.trim());
         } else {
@@ -309,6 +334,7 @@ public class OrderComposerController {
         orderItemsListView.setManaged(hasItems);
         emptyOrderLabel.setVisible(!hasItems);
         emptyOrderLabel.setManaged(!hasItems);
+        updateMessageRequirementIndicator();
         updateFormValidity();
     }
 
@@ -319,7 +345,38 @@ public class OrderComposerController {
     private boolean isFormInvalid() {
         String customerName = customerNameField != null ? customerNameField.getText() : null;
         boolean nameMissing = customerName == null || customerName.trim().isEmpty();
-        return nameMissing || orderLines.isEmpty();
+        boolean messageMissing = isMessageMissingWhenRequired();
+        return nameMissing || orderLines.isEmpty() || messageMissing;
+    }
+
+    private boolean isMessageMissingWhenRequired() {
+        if (!isMenuMessageRequired()) {
+            return false;
+        }
+        if (messageField == null) {
+            return true;
+        }
+        String text = messageField.getText();
+        return text == null || text.trim().isEmpty();
+    }
+
+    private boolean isMenuMessageRequired() {
+        return orderLines.stream().anyMatch(line -> {
+            if (line == null || line.getDish() == null) {
+                return false;
+            }
+            DishCategory category = line.getDish().getCategory();
+            return category == DishCategory.MENU;
+        });
+    }
+
+    private void updateMessageRequirementIndicator() {
+        if (messageRequirementLabel == null) {
+            return;
+        }
+        boolean required = isMenuMessageRequired();
+        messageRequirementLabel.setVisible(required);
+        messageRequirementLabel.setManaged(required);
     }
 
     public BooleanProperty formInvalidProperty() {
@@ -415,5 +472,10 @@ public class OrderComposerController {
         double getLineTotal() {
             return dish.getPrice() * quantity;
         }
+    }
+
+    @FunctionalInterface
+    public interface SubmitHandler {
+        void handle(OrderRequestDTO request, boolean printTicket);
     }
 }
