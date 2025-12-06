@@ -42,8 +42,13 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      - name: List target directory
+      - name: List target directory (Unix)
+        if: matrix.os != 'windows-latest'
         run: ls -la target/
+
+      - name: List target directory (Windows)
+        if: matrix.os == 'windows-latest'
+        run: dir target
 
       - name: Create installer (Windows)
         if: matrix.os == 'windows-latest'
@@ -61,8 +66,14 @@ jobs:
         run: |
           jpackage --input target --name "foyer-vietnam" --main-jar FoyerVietnam.jar --main-class Launcher --type deb --dest target/installer --app-version 1.0.0 --vendor "Foyer Vietnam" --description "Application de gestion des commandes" --linux-shortcut --java-options "--enable-native-access=ALL-UNNAMED"
 
-      - name: List installer directory
+      - name: List installer directory (Unix)
+        if: matrix.os != 'windows-latest'
         run: ls -la target/installer/ || echo "Installer directory not found"
+
+      - name: List installer directory (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: dir target\installer || echo "Installer directory not found"
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
