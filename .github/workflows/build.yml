@@ -48,15 +48,29 @@ jobs:
           mkdir -p target/jpackage-input
           cp target/FoyerVietnam.jar target/jpackage-input/
 
-      - name: Install WiX Toolset (Windows)
+      - name: Setup WiX Toolset (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          # Install WiX 3.x required by jpackage for exe/msi creation
-          choco install wixtoolset -y --version=3.14.1
-          # Add WiX to PATH
-          $env:PATH = "C:\Program Files (x86)\WiX Toolset v3.14\bin;$env:PATH"
-          echo "C:\Program Files (x86)\WiX Toolset v3.14\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          # Find and add WiX to PATH
+          $wixPath = Get-ChildItem "C:\Program Files (x86)\WiX Toolset*" -Directory | Select-Object -First 1
+          if ($wixPath) {
+            $binPath = Join-Path $wixPath.FullName "bin"
+            echo "Found WiX at: $binPath"
+            echo $binPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          } else {
+            echo "WiX not found, installing..."
+            choco install wixtoolset -y
+          }
+
+      - name: Verify JAR before jpackage (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          echo "=== Checking JAR file ==="
+          dir target\jpackage-input
+          echo "=== Testing JAR execution ==="
+          java -jar target\jpackage-input\FoyerVietnam.jar --version 2>&1 || echo "JAR test complete (may fail if no --version support)"
 
       - name: Create installer (Windows)
         if: matrix.os == 'windows-latest'
@@ -77,7 +91,7 @@ jobs:
             --win-menu ^
             --win-menu-group "Foyer Vietnam" ^
             --java-options "--enable-native-access=ALL-UNNAMED" ^
-            --verbose
+            --verbose 2>&1
 
       - name: Create installer (macOS)
         if: matrix.os == 'macos-latest'
