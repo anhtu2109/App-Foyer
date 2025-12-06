@@ -1,0 +1,98 @@
+name: Build Installers
+
+on:
+  push:
+    branches: [main, update]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:  # Permet de lancer manuellement
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: windows
+            extension: exe
+          - os: macos-latest
+            artifact: macos
+            extension: dmg
+          - os: ubuntu-latest
+            artifact: linux
+            extension: deb
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build with Maven
+        working-directory: " App Foyer"
+        run: mvn clean package -DskipTests
+
+      - name: Create installer (Windows)
+        if: matrix.os == 'windows-latest'
+        working-directory: " App Foyer"
+        run: |
+          jpackage --input target --name "Foyer Vietnam" --main-jar FoyerVietnam.jar --main-class Launcher --type exe --dest target/installer --app-version 1.0.0 --vendor "Foyer Vietnam" --description "Application de gestion des commandes - Foyer Vietnam" --win-dir-chooser --win-shortcut --win-menu --win-menu-group "Foyer Vietnam" --java-options "--enable-native-access=ALL-UNNAMED"
+
+      - name: Create installer (macOS)
+        if: matrix.os == 'macos-latest'
+        working-directory: " App Foyer"
+        run: |
+          jpackage --input target --name "Foyer Vietnam" --main-jar FoyerVietnam.jar --main-class Launcher --type dmg --dest target/installer --app-version 1.0.0 --vendor "Foyer Vietnam" --description "Application de gestion des commandes - Foyer Vietnam" --java-options "--enable-native-access=ALL-UNNAMED"
+
+      - name: Create installer (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: " App Foyer"
+        run: |
+          jpackage --input target --name "foyer-vietnam" --main-jar FoyerVietnam.jar --main-class Launcher --type deb --dest target/installer --app-version 1.0.0 --vendor "Foyer Vietnam" --description "Application de gestion des commandes - Foyer Vietnam" --linux-shortcut --linux-menu-group "Office" --java-options "--enable-native-access=ALL-UNNAMED"
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: foyer-vietnam-${{ matrix.artifact }}
+          path: " App Foyer/target/installer/*"
+          retention-days: 30
+
+  # Job pour créer une release avec tous les installateurs
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: installers
+
+      - name: Display structure
+        run: ls -R installers
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Foyer Vietnam v1.0.${{ github.run_number }}
+          body: |
+            ## Foyer Vietnam - Installation
+
+            Téléchargez le fichier correspondant à votre système :
+            - **Windows** : `Foyer Vietnam-1.0.0.exe`
+            - **macOS** : `Foyer Vietnam-1.0.0.dmg`
+            - **Linux** : `foyer-vietnam_1.0.0_amd64.deb`
+
+            Aucune installation de Java requise !
+          files: |
+            installers/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -9,24 +9,31 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public class OrderComposerController {
     @FXML
@@ -42,6 +49,8 @@ public class OrderComposerController {
     @FXML
     private TextArea messageField;
     @FXML
+    private Label messageRequirementLabel;
+    @FXML
     private Label modeLabel;
     @FXML
     private Button commanderButton;
@@ -49,14 +58,18 @@ public class OrderComposerController {
     private Button payerButton;
     @FXML
     private Button resetButton;
+    @FXML
+    private ToggleGroup categoryToggleGroup;
 
+    private final List<DishResponseDTO> availableDishes = new ArrayList<>();
     private final ObservableList<OrderLine> orderLines = FXCollections.observableArrayList();
     private final Map<Long, OrderLine> linesByDish = new HashMap<>();
     private DishController dishController;
     private final BooleanProperty formInvalid = new SimpleBooleanProperty(true);
-    private Consumer<OrderRequestDTO> submitHandler = request -> { };
+    private SubmitHandler submitHandler = (request, printTicket) -> { };
     private Long editingOrderId;
     private boolean payerFlag;
+    private DishCategory activeCategoryFilter;
 
     @FXML
     public void initialize() {
@@ -64,21 +77,13 @@ public class OrderComposerController {
         dishTilePane.setVgap(8);
         dishTilePane.setPrefColumns(3);
         orderItemsListView.setItems(orderLines);
-        orderItemsListView.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(OrderLine item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(String.format(Locale.getDefault(), "%s  x%d  —  %.2f €",
-                            item.getDish().getName(), item.getQuantity(), item.getLineTotal()));
-                }
-            }
-        });
+        orderItemsListView.setCellFactory(list -> new OrderLineCell());
         orderLines.addListener((ListChangeListener<OrderLine>) change -> updateSummary());
         if (customerNameField != null) {
             customerNameField.textProperty().addListener((obs, oldValue, newValue) -> updateFormValidity());
+        }
+        if (messageField != null) {
+            messageField.textProperty().addListener((obs, oldValue, newValue) -> updateFormValidity());
         }
         if (commanderButton != null) {
             commanderButton.disableProperty().bind(formInvalid);
@@ -98,8 +103,8 @@ public class OrderComposerController {
         populateDishGrid();
     }
 
-    public void setOnSubmit(Consumer<OrderRequestDTO> handler) {
-        this.submitHandler = handler != null ? handler : request -> { };
+    public void setOnSubmit(SubmitHandler handler) {
+        this.submitHandler = handler != null ? handler : (request, printTicket) -> { };
     }
 
     @FXML
@@ -108,14 +113,32 @@ public class OrderComposerController {
     }
 
     @FXML
+    private void handlePresetMessage(ActionEvent event) {
+        if (messageField == null || event == null) {
+            return;
+        }
+        Object source = event.getSource();
+        if (!(source instanceof Button button)) {
+            return;
+        }
+        Object data = button.getUserData();
+        if (data == null) {
+            return;
+        }
+        messageField.setText(data.toString());
+        messageField.positionCaret(messageField.getText().length());
+        updateFormValidity();
+    }
+
+    @FXML
     private void handleCommanderAction() {
-        submit(StatusOrder.ENCOURS, payerFlag);
+        submit(StatusOrder.ENCOURS, payerFlag, true);
     }
 
     @FXML
     private void handlePayerAction() {
         payerFlag = true;
-        submit(StatusOrder.ENCOURS, true);
+        submit(StatusOrder.ENCOURS, true, true);
     }
 
     public void startNewOrder() {
@@ -170,7 +193,9 @@ public class OrderComposerController {
 
     private void updateModeLabel(boolean editing) {
         if (modeLabel != null) {
-            String label = editing ? "Editing order #" + (editingOrderId != null ? editingOrderId : "?") : "Creating new order";
+            String label = editing
+                    ? "Modification commande n°" + (editingOrderId != null ? editingOrderId : "?")
+                    : "Création d'une nouvelle commande";
             modeLabel.setText(label);
         }
     }
@@ -198,12 +223,20 @@ public class OrderComposerController {
         if (dishController == null || dishTilePane == null) {
             return;
         }
-        dishTilePane.getChildren().clear();
-        List<DishResponseDTO> dishes = dishController.getMenu();
-        for (DishResponseDTO dish : dishes) {
-            Node card = createDishCard(dish);
-            dishTilePane.getChildren().add(card);
+        availableDishes.clear();
+        availableDishes.addAll(dishController.getMenu());
+        renderDishCards();
+    }
+
+    private void renderDishCards() {
+        if (dishTilePane == null) {
+            return;
         }
+        dishTilePane.getChildren().clear();
+        availableDishes.stream()
+                .filter(dish -> activeCategoryFilter == null || dish.getCategory() == activeCategoryFilter)
+                .map(this::createDishCard)
+                .forEach(node -> dishTilePane.getChildren().add(node));
     }
 
     private Node createDishCard(DishResponseDTO dish) {
@@ -240,20 +273,41 @@ public class OrderComposerController {
         updateSummary();
     }
 
-    private void submit(StatusOrder status, boolean payer) {
+    private void submit(StatusOrder status, boolean payer, boolean printTicket) {
         OrderRequestDTO dto = buildRequest(status, payer);
-        submitHandler.accept(dto);
+        submitHandler.handle(dto, printTicket);
+    }
+
+    @FXML
+    private void handleCategoryFilter(ActionEvent event) {
+        if (categoryToggleGroup == null) {
+            return;
+        }
+        Toggle selected = categoryToggleGroup.getSelectedToggle();
+        if (selected == null || selected.getUserData() == null || "ALL".equals(selected.getUserData())) {
+            activeCategoryFilter = null;
+        } else {
+            try {
+                activeCategoryFilter = DishCategory.valueOf(selected.getUserData().toString());
+            } catch (IllegalArgumentException ex) {
+                activeCategoryFilter = null;
+            }
+        }
+        renderDishCards();
     }
 
     private OrderRequestDTO buildRequest(StatusOrder status, boolean payer) {
         if (isFormInvalid()) {
-            throw new IllegalStateException("Order form is incomplete");
+            throw new IllegalStateException("Le formulaire de commande est incomplet");
         }
         OrderRequestDTO dto = new OrderRequestDTO();
         dto.setOrderId(editingOrderId);
         dto.setCustomerName(customerNameField.getText().trim());
         dto.setStatus(status);
-        String note = messageField.getText();
+        String note = messageField != null ? messageField.getText() : null;
+        if (isMenuMessageRequired() && (note == null || note.trim().isEmpty())) {
+            throw new IllegalStateException("Un message est requis pour les plats Menu");
+        }
         if (note != null && !note.trim().isEmpty()) {
             dto.setMessage(note.trim());
         } else {
@@ -280,6 +334,7 @@ public class OrderComposerController {
         orderItemsListView.setManaged(hasItems);
         emptyOrderLabel.setVisible(!hasItems);
         emptyOrderLabel.setManaged(!hasItems);
+        updateMessageRequirementIndicator();
         updateFormValidity();
     }
 
@@ -290,11 +345,98 @@ public class OrderComposerController {
     private boolean isFormInvalid() {
         String customerName = customerNameField != null ? customerNameField.getText() : null;
         boolean nameMissing = customerName == null || customerName.trim().isEmpty();
-        return nameMissing || orderLines.isEmpty();
+        boolean messageMissing = isMessageMissingWhenRequired();
+        return nameMissing || orderLines.isEmpty() || messageMissing;
+    }
+
+    private boolean isMessageMissingWhenRequired() {
+        if (!isMenuMessageRequired()) {
+            return false;
+        }
+        if (messageField == null) {
+            return true;
+        }
+        String text = messageField.getText();
+        return text == null || text.trim().isEmpty();
+    }
+
+    private boolean isMenuMessageRequired() {
+        return orderLines.stream().anyMatch(line -> {
+            if (line == null || line.getDish() == null) {
+                return false;
+            }
+            DishCategory category = line.getDish().getCategory();
+            return category == DishCategory.MENU;
+        });
+    }
+
+    private void updateMessageRequirementIndicator() {
+        if (messageRequirementLabel == null) {
+            return;
+        }
+        boolean required = isMenuMessageRequired();
+        messageRequirementLabel.setVisible(required);
+        messageRequirementLabel.setManaged(required);
     }
 
     public BooleanProperty formInvalidProperty() {
         return formInvalid;
+    }
+
+    private class OrderLineCell extends ListCell<OrderLine> {
+        private final Label infoLabel = new Label();
+        private final Label quantityLabel = new Label();
+        private final Button minusButton = new Button("-");
+        private final Button plusButton = new Button("+");
+        private final Region spacer = new Region();
+        private final HBox quantityBox = new HBox(6, minusButton, quantityLabel, plusButton);
+        private final HBox container = new HBox(10, infoLabel, spacer, quantityBox);
+
+        OrderLineCell() {
+            minusButton.setOnAction(event -> adjustQuantity(-1));
+            plusButton.setOnAction(event -> adjustQuantity(1));
+            minusButton.getStyleClass().add("ghost-button");
+            plusButton.getStyleClass().add("ghost-button");
+            quantityBox.setAlignment(Pos.CENTER_RIGHT);
+            container.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+        }
+
+        private void adjustQuantity(int delta) {
+            OrderLine line = getItem();
+            if (line == null) {
+                return;
+            }
+            if (delta > 0) {
+                line.increment();
+            } else {
+                line.decrement();
+                if (line.getQuantity() <= 0) {
+                    orderLines.remove(line);
+                    if (line.getDish().getId() != null) {
+                        linesByDish.remove(line.getDish().getId());
+                    }
+                    orderItemsListView.refresh();
+                    updateSummary();
+                    return;
+                }
+            }
+            orderItemsListView.refresh();
+            updateSummary();
+        }
+
+        @Override
+        protected void updateItem(OrderLine item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setGraphic(null);
+                return;
+            }
+            infoLabel.setText(String.format(Locale.getDefault(), "%s  x%d  —  %.2f €",
+                    item.getDish().getName(), item.getQuantity(), item.getLineTotal()));
+            quantityLabel.setText(String.valueOf(item.getQuantity()));
+            setGraphic(container);
+        }
     }
 
     private static class OrderLine {
@@ -307,6 +449,12 @@ public class OrderComposerController {
 
         void increment() {
             quantity++;
+        }
+
+        void decrement() {
+            if (quantity > 0) {
+                quantity--;
+            }
         }
 
         void setQuantity(int quantity) {
@@ -324,5 +472,10 @@ public class OrderComposerController {
         double getLineTotal() {
             return dish.getPrice() * quantity;
         }
+    }
+
+    @FunctionalInterface
+    public interface SubmitHandler {
+        void handle(OrderRequestDTO request, boolean printTicket);
     }
 }

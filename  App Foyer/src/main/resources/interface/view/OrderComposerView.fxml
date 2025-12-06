@@ -8,8 +8,48 @@
     <children>
         <VBox spacing="8" styleClass="new-order-column" HBox.hgrow="ALWAYS">
             <children>
-                <Label text="Available dishes" styleClass="section-title" />
-                <Label text="Tap a dish to add it" styleClass="muted-label" />
+                <Label text="Plats disponibles" styleClass="section-title" />
+                <Label text="Touchez un plat pour l'ajouter" styleClass="muted-label" />
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <children>
+                        <ToggleButton text="Tous" onAction="#handleCategoryFilter" selected="true">
+                            <toggleGroup>
+                                <ToggleGroup fx:id="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>ALL</userData>
+                        </ToggleButton>
+                        <ToggleButton text="Entrées" onAction="#handleCategoryFilter">
+                            <toggleGroup>
+                                <fx:reference source="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>ENTREE</userData>
+                        </ToggleButton>
+                        <ToggleButton text="Plats" onAction="#handleCategoryFilter">
+                            <toggleGroup>
+                                <fx:reference source="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>PLAT</userData>
+                        </ToggleButton>
+                        <ToggleButton text="Menu" onAction="#handleCategoryFilter">
+                            <toggleGroup>
+                                <fx:reference source="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>MENU</userData>
+                        </ToggleButton>
+                        <ToggleButton text="Desserts" onAction="#handleCategoryFilter">
+                            <toggleGroup>
+                                <fx:reference source="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>DESSERT</userData>
+                        </ToggleButton>
+                        <ToggleButton text="Boissons" onAction="#handleCategoryFilter">
+                            <toggleGroup>
+                                <fx:reference source="categoryToggleGroup"/>
+                            </toggleGroup>
+                            <userData>BOISSON</userData>
+                        </ToggleButton>
+                    </children>
+                </HBox>
                 <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
                             styleClass="order-dish-scroll">
                     <content>
@@ -23,13 +63,22 @@
         </VBox>
         <VBox spacing="10" styleClass="new-order-column" HBox.hgrow="ALWAYS">
             <children>
-                <Label fx:id="modeLabel" text="Order in progress" styleClass="section-title" />
-                <TextField fx:id="customerNameField" promptText="Customer name" />
-                <TextArea fx:id="messageField" promptText="Message for the kitchen (optional)" prefRowCount="3"
+                <Label fx:id="modeLabel" text="Commande en cours" styleClass="section-title" />
+                <TextField fx:id="customerNameField" promptText="Nom du client" />
+                <TextArea fx:id="messageField" promptText="Message pour la cuisine (requis pour Menu)" prefRowCount="3"
                           wrapText="true" />
-                <Label text="Items" styleClass="subtitle" />
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <children>
+                        <Label text="Raccourcis message :" styleClass="muted-label" />
+                        <Button text="Chè đậu" onAction="#handlePresetMessage" userData="Chè đậu" />
+                        <Button text="Chè chuối" onAction="#handlePresetMessage" userData="Chè chuối" />
+                    </children>
+                </HBox>
+                <Label fx:id="messageRequirementLabel" text="Message requis pour les plats Menu" visible="false"
+                       managed="false" styleClass="muted-label" />
+                <Label text="Articles" styleClass="subtitle" />
                 <ListView fx:id="orderItemsListView" prefHeight="220" />
-                <Label fx:id="emptyOrderLabel" text="Select a dish to get started" styleClass="empty-state" />
+                <Label fx:id="emptyOrderLabel" text="Sélectionnez un plat pour commencer" styleClass="empty-state" />
                 <HBox alignment="CENTER_RIGHT" spacing="8">
                     <children>
                         <Label text="Total" styleClass="subtitle" />
@@ -38,7 +87,7 @@
                 </HBox>
                 <HBox alignment="CENTER_RIGHT" spacing="10">
                     <children>
-                        <Button fx:id="resetButton" text="Reset" onAction="#handleReset" />
+                        <Button fx:id="resetButton" text="Réinitialiser" onAction="#handleReset" />
                         <Button fx:id="commanderButton" text="Commander" onAction="#handleCommanderAction" />
                         <Button fx:id="payerButton" text="Payer" onAction="#handlePayerAction" />
                     </children>

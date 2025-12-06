@@ -33,4 +33,8 @@ public class OrderController {
     public void deleteOrder(long id) {
         orderService.deleteOrder(id);
     }
+
+    public void purgeCancelledOlderThanDays(int days) {
+        orderService.purgeCancelledOlderThanDays(days);
+    }
 }

@@ -19,7 +19,7 @@ public class Order {
         this.payer = false;
     }
 
-    public Order(Long id, String customerName, StatusOrder status, LocalDateTime createdAt, List<OrderItem> items, String message, boolean payer) {
+    public Order(Long id, String customerName, StatusOrder status, LocalDateTime createdAt, List<OrderItem> items, String message,boolean payer) {
         this.id = id;
         this.customerName = customerName;
         this.status = status;

@@ -1,35 +1,39 @@
-import backend.dto.DishRequestDTO;
+import backend.dto.DishResponseDTO;
 import backend.entity.DishCategory;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 
 import java.util.Optional;
 
-public final class AddDishDialog {
-    private AddDishDialog() {
+public final class EditDishDialog {
+    private EditDishDialog() {
     }
 
-    public static Optional<DishRequestDTO> show() {
-        Dialog<DishRequestDTO> dialog = new Dialog<>();
-        dialog.setTitle("Ajouter un plat");
-        dialog.setHeaderText("Saisissez les informations du nouveau plat");
+    public static Optional<DishResponseDTO> show(DishResponseDTO existingDish) {
+        if (existingDish == null) {
+            return Optional.empty();
+        }
+        Dialog<DishResponseDTO> dialog = new Dialog<>();
+        dialog.setTitle("Modifier un plat");
+        dialog.setHeaderText("Mettez à jour les informations pour \"" + existingDish.getName() + "\"");
 
-        ButtonType addButtonType = new ButtonType("Ajouter", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+        ButtonType saveButtonType = new ButtonType("Enregistrer", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
 
-        TextField nameField = new TextField();
-        nameField.setPromptText("Nom du plat");
-
-        TextField priceField = new TextField();
-        priceField.setPromptText("Prix");
-
+        TextField nameField = new TextField(existingDish.getName());
+        TextField priceField = new TextField(String.valueOf(existingDish.getPrice()));
         ComboBox<DishCategory> categoryComboBox = new ComboBox<>(FXCollections.observableArrayList(DishCategory.values()));
-        categoryComboBox.setPromptText("Catégorie");
+        categoryComboBox.setValue(existingDish.getCategory());
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -45,7 +49,7 @@ public final class AddDishDialog {
 
         dialog.getDialogPane().setContent(grid);
 
-        Node addButton = dialog.getDialogPane().lookupButton(addButtonType);
+        Node saveButton = dialog.getDialogPane().lookupButton(saveButtonType);
         BooleanBinding isFormValid = Bindings.createBooleanBinding(
                 () -> isNameValid(nameField.getText())
                         && isPriceValid(priceField.getText())
@@ -53,11 +57,12 @@ public final class AddDishDialog {
                 nameField.textProperty(),
                 priceField.textProperty(),
                 categoryComboBox.valueProperty());
-        addButton.disableProperty().bind(isFormValid.not());
+        saveButton.disableProperty().bind(isFormValid.not());
 
         dialog.setResultConverter(button -> {
-            if (button == addButtonType) {
-                DishRequestDTO dto = new DishRequestDTO();
+            if (button == saveButtonType) {
+                DishResponseDTO dto = new DishResponseDTO();
+                dto.setId(existingDish.getId());
                 dto.setName(nameField.getText().trim());
                 dto.setPrice(Double.parseDouble(priceField.getText().trim()));
                 dto.setCategory(categoryComboBox.getValue());

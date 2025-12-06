@@ -10,10 +10,12 @@
         <HBox spacing="10" alignment="CENTER_LEFT">
             <children>
                 <Label text="Menu" styleClass="section-title" />
-                <Button text="Reload menu" onAction="#refreshDishes" />
+                <Button text="Recharger le menu" onAction="#refreshDishes" />
+                <Button fx:id="editModeButton" text="Modifier" onAction="#toggleEditMode" />
+                <Button fx:id="deleteModeButton" text="Supprimer" onAction="#toggleDeleteMode" />
             </children>
         </HBox>
-        <Label fx:id="emptyStateLabel" text="No dishes available" visible="false"
+        <Label fx:id="emptyStateLabel" text="Aucun plat disponible" visible="false"
                styleClass="empty-state" />
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
                     styleClass="dish-grid-scroll" VBox.vgrow="ALWAYS">
