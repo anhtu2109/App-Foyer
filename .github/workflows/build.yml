@@ -48,6 +48,16 @@ jobs:
           mkdir -p target/jpackage-input
           cp target/FoyerVietnam.jar target/jpackage-input/
 
+      - name: Install WiX Toolset (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          # Install WiX 3.x required by jpackage for exe/msi creation
+          choco install wixtoolset -y --version=3.14.1
+          # Add WiX to PATH
+          $env:PATH = "C:\Program Files (x86)\WiX Toolset v3.14\bin;$env:PATH"
+          echo "C:\Program Files (x86)\WiX Toolset v3.14\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Create installer (Windows)
         if: matrix.os == 'windows-latest'
         shell: cmd
@@ -66,7 +76,8 @@ jobs:
             --win-shortcut ^
             --win-menu ^
             --win-menu-group "Foyer Vietnam" ^
-            --java-options "--enable-native-access=ALL-UNNAMED"
+            --java-options "--enable-native-access=ALL-UNNAMED" ^
+            --verbose
 
       - name: Create installer (macOS)
         if: matrix.os == 'macos-latest'
