@@ -39,32 +39,65 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build with Maven
+      - name: Build JAR with Maven
         run: mvn clean package -DskipTests
 
-      - name: List target directory (Unix)
-        if: matrix.os != 'windows-latest'
-        run: ls -la target/
-
-      - name: List target directory (Windows)
-        if: matrix.os == 'windows-latest'
-        run: dir target
+      - name: Prepare input directory for jpackage
+        shell: bash
+        run: |
+          mkdir -p target/jpackage-input
+          cp target/FoyerVietnam.jar target/jpackage-input/
 
       - name: Create installer (Windows)
         if: matrix.os == 'windows-latest'
         shell: cmd
         run: |
-          jpackage --input target --name "Foyer Vietnam" --main-jar FoyerVietnam.jar --main-class Launcher --type exe --dest target/installer --app-version 1.0.0 --vendor "Foyer Vietnam" --description "Application de gestion des commandes" --win-dir-chooser --win-shortcut --win-menu --win-menu-group "Foyer Vietnam" --java-options "--enable-native-access=ALL-UNNAMED"
+          jpackage ^
+            --input target/jpackage-input ^
+            --main-jar FoyerVietnam.jar ^
+            --main-class Launcher ^
+            --name "Foyer Vietnam" ^
+            --type exe ^
+            --dest target/installer ^
+            --app-version 1.0.0 ^
+            --vendor "Foyer Vietnam" ^
+            --description "Application de gestion des commandes" ^
+            --win-dir-chooser ^
+            --win-shortcut ^
+            --win-menu ^
+            --win-menu-group "Foyer Vietnam" ^
+            --java-options "--enable-native-access=ALL-UNNAMED"
 
       - name: Create installer (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          jpackage --input target --name "Foyer Vietnam" --main-jar FoyerVietnam.jar --main-class Launcher --type dmg --dest target/installer --app-version 1.0.0 --vendor "Foyer Vietnam" --description "Application de gestion des commandes" --java-options "--enable-native-access=ALL-UNNAMED"
+          jpackage \
+            --input target/jpackage-input \
+            --main-jar FoyerVietnam.jar \
+            --main-class Launcher \
+            --name "Foyer Vietnam" \
+            --type dmg \
+            --dest target/installer \
+            --app-version 1.0.0 \
+            --vendor "Foyer Vietnam" \
+            --description "Application de gestion des commandes" \
+            --java-options "--enable-native-access=ALL-UNNAMED"
 
       - name: Create installer (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          jpackage --input target --name "foyer-vietnam" --main-jar FoyerVietnam.jar --main-class Launcher --type deb --dest target/installer --app-version 1.0.0 --vendor "Foyer Vietnam" --description "Application de gestion des commandes" --linux-shortcut --java-options "--enable-native-access=ALL-UNNAMED"
+          jpackage \
+            --input target/jpackage-input \
+            --main-jar FoyerVietnam.jar \
+            --main-class Launcher \
+            --name "foyer-vietnam" \
+            --type deb \
+            --dest target/installer \
+            --app-version 1.0.0 \
+            --vendor "Foyer Vietnam" \
+            --description "Application de gestion des commandes" \
+            --linux-shortcut \
+            --java-options "--enable-native-access=ALL-UNNAMED"
 
       - name: List installer directory (Unix)
         if: matrix.os != 'windows-latest'
@@ -87,6 +120,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
 
     steps:
       - name: Download all artifacts
